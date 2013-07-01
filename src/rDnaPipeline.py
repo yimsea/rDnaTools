@@ -1,4 +1,4 @@
-#!/home/UNIXHOME/bbowman/environments/rDnaTools/bin/python2.7
+#! /usr/bin/env python
 
 import os
 import sys
