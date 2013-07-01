@@ -36,11 +36,12 @@ import subprocess
 
 from pbrdna.io.FastqIO import FastqReader, FastqWriter
 from pbrdna.io.FastaIO import FastaRecord, FastaWriter  
-from pbrdna._utils import createDirectory, validateInputFile, validateFloat
-from pbrdna._utils import which, getZmw, meanPQv
+from pbrdna.fastq.utils import meanPQv
+from pbrdna._utils import which, getZmw, createDirectory, validateInputFile, validateFloat
 
 DEFAULT_DIST = 0.03
 MIN_FULL_LENGTH = 1400
+MIN_CLUSTER_SIZE = 3
 
 class ClusterSeparator(object):
     """
@@ -51,11 +52,13 @@ class ClusterSeparator(object):
     # Initialization Methods #
     ##########################
 
-    def __init__(self, listFile=None, ccsFile=None, distance=None, output=None):
+    def __init__(self, listFile=None, ccsFile=None, output=None, 
+                                                    distance=None, 
+                                                    min_cluster_size=None):
         if listFile is None or ccsFile is None:
             self.initializeFromArgs()
         else:
-            self.initializeFromCall(listFile, ccsFile, distance, output)
+            self.initializeFromCall(listFile, ccsFile, output, distance, min_cluster_size)
         self.validateSettings()
 
     def initializeFromArgs(self):
@@ -65,6 +68,9 @@ class ClusterSeparator(object):
                             help="Mothur list file of cluster data")
         parser.add_argument('ccsFile', metavar='FILE',
                             help="Fasta or Fastq file of CCS sequences")
+        parser.add_argument('-c', '--min_cluster_size', type=int,
+                            default=MIN_CLUSTER_SIZE, metavar='INT',
+                            help="Minimum number of sequences to require in a cluster")
         parser.add_argument('-d', '--distance', type=float,
                             default=DEFAULT_DIST, metavar='FLOAT',
                             help="Distance at which to cluster sequences")
@@ -82,11 +88,13 @@ class ClusterSeparator(object):
         args = parser.parse_args()
         self.__dict__.update( vars(args) )
 
-    def initializeFromCall(self, listFile, ccsFile, distance, output):
+    def initializeFromCall(self, listFile, ccsFile, output, distance=None, 
+                                                            min_cluster_size=None):
         self.listFile = listFile
         self.ccsFile = ccsFile
-        self.distance = DEFAULT_DIST if distance is None else distance
         self.output = output
+        self.distance = DEFAULT_DIST if distance is None else distance
+        self.min_cluster_size = MIN_CLUSTER_SIZE if distance is None else min_cluster_size
         self.outputDir = 'reseq'
         self.outputFastq = False
         self.outputReference = True
@@ -235,30 +243,24 @@ class ClusterSeparator(object):
     def outputReferenceFasta( self, reference, count):
         print "Creating reference sequence for Cluster #%s" % count
         referenceFile = 'cluster%s_ref.fasta' % count
+        reference_desc = 'cluster{0}_reference\t{1}'.format(count, reference.name)
         if os.path.exists( referenceFile ):
             return referenceFile
         with FastaWriter( referenceFile ) as handle:
-            referenceFasta = FastaRecord( reference.name,
+            referenceFasta = FastaRecord( reference_desc,
                                           reference.sequence )
             handle.writeRecord( referenceFasta )
         return referenceFile
 
-    def outputRepresentativeRead( self, representativeRead, count ):
-        print "Creating representative sequence file Cluster #%s" % count
-        representativeFile = 'cluster%s_represent.fastq' % count
-        if os.path.exists( representativeFile ):
-            return representativeFile
-        with FastqWriter( representativeFile ) as handle:
-            handle.writeRecord( representativeRead )
-        return representativeFile
-
     def outputClusterFileList( self, clusterFiles ):
         print "Writing out the names of the individual cluster files"
         with open( self.output, 'w') as handle:
-            for clusterFile, referenceFile in clusterFiles:
+            for clusterFile, referenceFile, count in clusterFiles:
                 clusterPath = os.path.join( self.outputDir, clusterFile )
                 referencePath = os.path.join( self.outputDir, referenceFile )
-                handle.write('%s\t%s\n' % (clusterPath, referencePath))
+                handle.write('{0}\t{1}\t{2}\n'.format(clusterPath, 
+                                                      referencePath, 
+                                                      count))
         return self.output
 
     def __call__( self ):
@@ -278,12 +280,12 @@ class ClusterSeparator(object):
             clusterFile = self.outputClusterFasta( reads, count )
             if self.outputFastq:
                 self.outputClusterFastq( reads, count )
-            if len(reads) > 1 and self.outputReference:
+            if len(reads) >= self.min_cluster_size and self.outputReference:
                 reference = self.pickReference( reads )
                 referenceFile = self.outputReferenceFasta( reference, count )
-                clusterFiles.append( (clusterFile, referenceFile) )
+                clusterFiles.append( (clusterFile, referenceFile, len(reads)) )
             else:
-                clusterFiles.append( (clusterFile, 'None') )
+                clusterFiles.append( (clusterFile, 'None', len(reads)) )
         # Return to the origin directory and output the results summary
         os.chdir( self.origin )
         if self.output:

@@ -6,16 +6,18 @@ import logging
 import subprocess
 
 from pbrdna._utils import *
+from pbrdna.io.FastaIO import FastaWriter
 from pbrdna.io.BasH5IO import BasH5Extractor
 from pbrdna.io.MothurIO import SummaryReader
-from pbrdna.fastq import QualityFilter
+from pbrdna.fasta.utils import fasta_count, copy_fasta_sequences
+from pbrdna.fastq.QualityFilter import QualityFilter
 from pbrdna.fastq.QualityAligner import QualityAligner
 from pbrdna.fastq.QualityMasker import QualityMasker
 from pbrdna.mothur.MothurTools import MothurRunner
 from pbrdna.cluster.ClusterSeparator import ClusterSeparator
 from pbrdna.resequence.DagConTools import DagConRunner
 
-__version__ = "0.2"
+__version__ = "0.3"
 
 MIN_DIST = 0.001
 MAX_DIST = 0.5
@@ -24,7 +26,8 @@ MIN_QV = 15
 DEFAULT_FRAC = 0.8
 MIN_LENGTH = 500
 MIN_RATIO = 0.5
-PRECLUSTER_DIFFS = 4
+PRECLUSTER_DIFFS = 7
+MIN_CLUSTER_SIZE = 3
 CLUSTER_METHODS = ('nearest', 'average', 'furthest')
 DEFAULT_METHOD = 'average'
 
@@ -37,16 +40,13 @@ class rDnaPipeline( object ):
     # Initialization Methods #
     ##########################
 
-    def __init__(self, sequenceFile=None):
-        if sequenceFile is None:
-            self.initializeFromArgs()
-        else:
-            self.initializeFromCall(sequenceFile)
-        self.validateSettings()
-        self.initializeOutput()
-        self.initializeLogger()
+    def __init__(self):
+        self.initialize_from_args()
+        self.validate_settings()
+        self.initialize_output()
+        self.initialize_logger()
 
-    def initializeFromArgs(self):
+    def initialize_from_args(self):
         import argparse
         desc = 'A pipeline tool for analyzing rRNA amplicons'
         parser = argparse.ArgumentParser(description=desc)
@@ -64,19 +64,22 @@ class rDnaPipeline( object ):
         parser.add_argument('-f', '--fraction', metavar='FLOAT', 
                             type=float, default=DEFAULT_FRAC,
                             help='Fraction of full-length to require of each read')
-        parser.add_argument('-c', '--clustering_method', metavar='METHOD',
-                            dest='clusteringMethod', default=DEFAULT_METHOD,
-                            choices=CLUSTER_METHODS,
-                            help="Distance algorithm to use in clustering")
         parser.add_argument('-o', '--output', dest='outputDir', metavar='DIR',
                             default='rna_pipeline_run',
                             help="Specify the output folder")
         parser.add_argument('-q', '--minimum_qv', type=int, metavar='INT', 
                             dest='minQv', default=MIN_QV,
                             help='Minimum QV to allow after sequence masking')
+        parser.add_argument('-c', '--min_cluster_size', type=int, metavar='INT',
+                            default=MIN_CLUSTER_SIZE,
+                            help='Minimum cluster to generate consensus sequences')
         parser.add_argument('-l', '--minimum_length', type=int, metavar='INT', 
                             dest='minLength', default=MIN_LENGTH,
                             help='Minimun length sequence to allow after masking')
+        parser.add_argument('--clustering_method', metavar='METHOD',
+                            dest='clusteringMethod', default=DEFAULT_METHOD,
+                            choices=CLUSTER_METHODS,
+                            help="Distance algorithm to use in clustering")
         parser.add_argument('--precluster_diffs', type=int, metavar='INT',
                             dest='preclusterDiffs', default=PRECLUSTER_DIFFS,
                             help='Maximum number of differences to allow in pre-clustering')
@@ -105,11 +108,12 @@ class rDnaPipeline( object ):
         parser.add_argument('--debug', action='store_true',
                             help="Turn on DEBUG message logging")
         args = parser.parse_args()
+        print args
         self.__dict__.update( vars(args) )
 
-    def validateSettings(self):
+    def validate_settings(self):
         # Validate the input file
-        root, ext = self.splitRootFromExt( self.sequenceFile )
+        root, ext = splitRootFromExt( self.sequenceFile )
         if ext in ['.bas.h5', '.fofn']:
             self.dataType = 'bash5'
         elif ext in ['.fq', '.fastq']:
@@ -134,7 +138,7 @@ class rDnaPipeline( object ):
         validateInt( self.numProc, minValue=0 )
         validateFloat( self.distance, minValue=MIN_DIST, maxValue=MAX_DIST )
 
-    def initializeOutput(self):
+    def initialize_output(self):
         # Create the Output directory
         createDirectory( self.outputDir )
         # Create a symbolic link from the data file to the output dir
@@ -158,7 +162,7 @@ class rDnaPipeline( object ):
                                      stdoutLog, 
                                      stderrLog)
 
-    def initializeLogger(self):
+    def initialize_logger(self):
         dateFormat = "%Y-%m-%d %I:%M:%S"
         self.log = logging.getLogger()
         if self.debug:
@@ -203,12 +207,12 @@ class rDnaPipeline( object ):
         self.log.info('Preparing to run %s on "%s"' % (processName, inputFile))
         self.processCount += 1
         if suffix:
-            outputFile = self.predictOutputFile(inputFile, suffix)
+            outputFile = predictOutputFile(inputFile, suffix)
             return outputFile
         elif suffixList:
             outputFiles = []
             for suffix in suffixList:
-                outputFile = self.predictOutputFile( inputFile, suffix )
+                outputFile = predictOutputFile( inputFile, suffix )
                 outputFiles.append( outputFile )
             return outputFiles
 
@@ -265,13 +269,13 @@ class rDnaPipeline( object ):
         return outputFile
 
     def filterFastqFile(self, fastqFile):
-        outputList = self.processSetup( fastqFile, 
+        outputFile = self.processSetup( fastqFile, 
                                         'FilterQuality', 
                                         suffix='filter.fastq' )
         if self.outputFilesExist( outputFile=outputFile ):
             return outputFile
-        aligner = QualityFilter( fastqFile, outputFile, self. )
-        aligner()
+        filter_tool = QualityFilter( fastqFile, outputFile, self.minAccuracy )
+        filter_tool()
         self.processCleanup( outputFile=outputFile )
         return outputFile
 
@@ -447,7 +451,8 @@ class rDnaPipeline( object ):
         if self.outputFilesExist( outputFile=outputFile ):
             return outputFile
         mothurArgs = { 'fasta':alignFile,
-                       'calc':'nogaps',
+                       'calc':'onegap',
+                       'countends':'F',
                        'output':'lt' }
         logFile = self.getProcessLogFile('dist.seqs', True)
         self.factory.runJob('dist.seqs', mothurArgs, logFile)
@@ -480,9 +485,10 @@ class rDnaPipeline( object ):
         if self.outputFilesExist( outputFile=outputFile ):
             return outputFile
         separator = ClusterSeparator( listFile, 
-                                      sequenceFile, 
+                                      sequenceFile,
+                                      outputFile,
                                       self.distance, 
-                                      outputFile )
+                                      self.min_cluster_size )
         separator()
         self.processCleanup( outputFile=outputFile )
         return outputFile
@@ -496,11 +502,13 @@ class rDnaPipeline( object ):
         consensusFiles = []
         with open( clusterListFile ) as handle:
             for line in handle:
-                sequenceFile, referenceFile = line.strip().split()
+                sequenceFile, referenceFile, count = line.strip().split()
                 if referenceFile.endswith('None'):
                     consensusFiles.append( (sequenceFile, 'None') )
                 else:
-                    consensus = self.consensusTool( sequenceFile, referenceFile )
+                    root_name = os.path.basename( sequenceFile )
+                    consensus = self.consensusTool( sequenceFile, 
+                                                    referenceFile )
                     consensusFiles.append( (referenceFile, consensus) )
         with open( outputFile, 'w' ) as handle:
             for filenamePair in consensusFiles:
@@ -538,7 +546,7 @@ class rDnaPipeline( object ):
             for line in handle:
                 referenceFile, consensusFile = line.strip().split()
                 if consensusFile.endswith('None'):
-                    selectedFiles.append( referenceFile )
+                    pass
                 elif fasta_count( consensusFile ) == 1:
                     selectedFiles.append( consensusFile )
                 else:
@@ -546,6 +554,20 @@ class rDnaPipeline( object ):
         with open( outputFile, 'w' ) as handle:
             for filename in selectedFiles:
                 handle.write(filename + '\n')
+        self.processCleanup( outputFile=outputFile )
+        return outputFile
+
+    def outputFinalSequences( self, finalSequenceList ):
+        outputFile = self.processSetup( finalSequenceList, 
+                                        'SequenceWriter',
+                                        suffix='fasta' )
+        if self.outputFilesExist( outputFile=outputFile ):
+            return outputFile
+        with FastaWriter( outputFile ) as writer:
+            with open( finalSequenceList ) as handle:
+                for line in handle:
+                    sequenceFile = line.strip()
+                    copy_fasta_sequences( sequenceFile, writer )
         self.processCleanup( outputFile=outputFile )
         return outputFile
 
@@ -560,8 +582,7 @@ class rDnaPipeline( object ):
         # If we have a Fastq, filter low-quality reads and convert to FASTA
         if fastqFile:
             filteredFastq = self.filterFastqFile( fastqFile )
-            fastaFile, qualFile = self.separateFastqFile( fastqFile )
-"""
+            fastaFile, qualFile = self.separateFastqFile( filteredFastq )
         # Align the Fasta sequences and remove partial reads
         alignedFile = self.alignSequences( fastaFile )
         summaryFile = self.summarizeSequences( alignedFile )
@@ -599,8 +620,8 @@ class rDnaPipeline( object ):
             consensusFile = self.generateConsensusSequences( clusterListFile )
             self.cleanupConsensusFolder( consensusFile )
             selectedFile = self.selectFinalSequences( consensusFile )
-"""
+            finalFile = self.outputFinalSequences( selectedFile )
 
 if __name__ == '__main__':
-    rdnap = rDnaPipeline()
-    rdnap()
+    pipeline = rDnaPipeline()
+    pipeline()

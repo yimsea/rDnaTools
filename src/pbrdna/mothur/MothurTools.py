@@ -7,7 +7,7 @@ __version__ = "0.1"
 
 VALID_COMMANDS = frozenset(['fastq.info', 'align.seqs', 'chimera.uchime',
                             'screen.seqs', 'remove.seqs', 'filter.seqs', 
-                            'summary.seqs', 'dist.seqs', 'unique.seqs'
+                            'summary.seqs', 'dist.seqs', 'unique.seqs',
                             'trim.seqs', 'pre.cluster', 'cluster', 
                             'set.logfile'])
 
@@ -17,7 +17,7 @@ NUMPROC_COMMANDS = frozenset(['align.seqs', 'chimera.uchime', 'screen.seqs',
 VALID_PARAMS = frozenset(['fasta', 'fastq', 'qfile', 'reference', 'name',
                           'flip', 'start', 'end', 'minlength', 'processors',
                           'vertical', 'calc', 'output', 'phylip', 'method',
-                          'accnos', 'qaverage', 'diffs', 'name'])
+                          'accnos', 'countends', 'qaverage', 'diffs', 'name'])
 
 class MothurCommand(object):
     """

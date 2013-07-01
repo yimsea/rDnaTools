@@ -2,44 +2,11 @@ import os
 import sys
 from collections import namedtuple
 
-import numpy as np
-
-from pbrdna.io.FastaIO import FastaReader
-from pbrdna.io.FastqIO import FastqRecord
-
 BlasrM1 = namedtuple('BlasrM1', ['qname', 'tname', 'qstrand', 'tstrand',
                                  'score', 'pctsimilarity', 
                                  'tstart', 'tend', 'tlength',
                                  'qstart', 'qend', 'qlength',
                                  'ncells'])
-
-def fasta_count( fasta_file ):
-    count = 0
-    try:
-        for record in FastaReader( fasta_file ):
-            if len(record.sequence) > 0:
-                count += 1
-    except:
-        pass
-    return count
-
-def meanP( record ):
-    try:
-        assert isinstance(record, FastqRecord)
-    except:
-        raise TypeError("Record is not a FastqRecord!")
-    pValues = [10**-(i/10) for i in np.float32(record.quality)]
-    return sum(pValues) / len(pValues)
-
-def meanPQv( record ):
-    try:
-        assert isinstance(record, FastqRecord)
-    except:
-        raise TypeError("Record is not a FastqRecord!")
-    return pValueToQv( meanP(record) )
-
-def pValueToQv( pValue ):
-    return -10 * np.log10( pValue )
 
 def fileExists( filename ):
     return os.path.exists( filename ) and os.path.getsize( filename ) > 0

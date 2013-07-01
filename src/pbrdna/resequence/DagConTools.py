@@ -33,7 +33,7 @@ import logging
 import subprocess
 
 from pbrdna._utils import createDirectory, validateInputFile, validateOutputFile
-from pbrdna._utils import which
+from pbrdna._utils import which 
 
 SCRIPT_CHOICES = ['gcon.py']
 MODE_CHOICES = ['r', 'd']
@@ -51,7 +51,6 @@ class DagConRunner(object):
     def __init__(self, script, mode=None):
         self.script = script
         self.mode   = mode
-        # Validate the settings
         self.validateSettings()
 
     def validateSettings(self):
@@ -73,21 +72,27 @@ class DagConRunner(object):
     # Instance Methods #
     ####################
 
-    def runGcon(self, inputFile, outputFile, refFile=None):
+    def runGcon(self, inputFile, outputFile, refFile=None, name=None):
         if outputFile is None:
             outputFile = self.getOutputFileName( inputFile )
+        if name is None:
+            path, filename =  os.path.split( inputFile )
+            filename, ext = os.path.splitext( filename ) 
+            name = filename + '_consensus'
         if self.mode == 'r':
             assert refFile is not None
             p = subprocess.Popen( [self.executable, 
                                    self.mode,
                                    inputFile,
                                    refFile,
+                                   '--cname', name,
                                    '-o', outputFile] )
             p.wait()
         elif self.mode == 'd':
             p = subprocess.Popen( [self.executable, 
                                    self.mode,
                                    inputFile,
+                                   '--cname', name,
                                    '-o', outputFile] )
             p.wait()
         return outputFile

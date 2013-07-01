@@ -41,7 +41,6 @@ See:
   http://en.wikipedia.org/wiki/FASTQ_format
 """
 
-
 __all__ = [ "FastqRecord",
             "FastqReader",
             "FastqWriter",
@@ -51,7 +50,6 @@ __all__ = [ "FastqRecord",
 from IOUtils import getFileHandle, splitFileContents
 from cStringIO import StringIO
 import numpy as np, re
-
 
 class FastqRecord(object):
     """

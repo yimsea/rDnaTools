@@ -22,7 +22,7 @@ setup(
     install_requires=[
         'h5py >= 2.0.1',
         'numpy >= 1.6.0',
-        'pbcore >= 0.6.0',
+        'pbcore >= 0.6.3',
         'pbtools.pbdagcon >= 0.2.1'
         ]
     )
