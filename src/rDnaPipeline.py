@@ -1,11 +1,9 @@
 #! /usr/bin/env python
 
-import os
-import sys
-import logging
-import subprocess
+import os, sys, logging
 
-from pbrdna._utils import *
+from pbrdna import __VERSION__
+from pbrdna.arguments import args, parse_args
 from pbrdna.io.FastaIO import FastaWriter
 from pbrdna.io.BasH5IO import BasH5Extractor
 from pbrdna.io.MothurIO import SummaryReader
@@ -16,100 +14,21 @@ from pbrdna.fastq.QualityMasker import QualityMasker
 from pbrdna.mothur.MothurTools import MothurRunner
 from pbrdna.cluster.ClusterSeparator import ClusterSeparator
 from pbrdna.resequence.DagConTools import DagConRunner
+from pbrdna._utils import *
 
-__version__ = "0.3"
-
-MIN_DIST = 0.001
-MAX_DIST = 0.5
-MIN_ACCURACY = 0.99
-MIN_QV = 15
-DEFAULT_FRAC = 0.8
-MIN_LENGTH = 500
-MIN_RATIO = 0.5
-PRECLUSTER_DIFFS = 7
-MIN_CLUSTER_SIZE = 3
-CLUSTER_METHODS = ('nearest', 'average', 'furthest')
-DEFAULT_METHOD = 'average'
+log = logging.getLogger(__name__)
 
 class rDnaPipeline( object ):
     """
     A tool for running a community analysis pipeline on PacBioData
     """
 
-    ##########################
-    # Initialization Methods #
-    ##########################
-
     def __init__(self):
-        self.initialize_from_args()
+        parse_args()
+        self.__dict__.update( vars(args) )
         self.validate_settings()
         self.initialize_output()
         self.initialize_logger()
-
-    def initialize_from_args(self):
-        import argparse
-        desc = 'A pipeline tool for analyzing rRNA amplicons'
-        parser = argparse.ArgumentParser(description=desc)
-        parser.add_argument('sequenceFile', metavar='FILE',
-                            help="File of rRNA sequencing data to use")
-        parser.add_argument('-a', '--minimum_accuracy', type=float, metavar='FLOAT',
-                            dest='minAccuracy', default=MIN_ACCURACY,
-                            help='Minimum predicted sequence accuracy')
-        parser.add_argument('-d', '--distance', metavar='FLOAT', 
-                            type=float, default=0.03,
-                            help="Distance at which to cluster sequences")
-        parser.add_argument('-n', '--num_processes', metavar='INT',
-                            default=1, dest='numProc', type=int,
-                            help="Number of processors to use")
-        parser.add_argument('-f', '--fraction', metavar='FLOAT', 
-                            type=float, default=DEFAULT_FRAC,
-                            help='Fraction of full-length to require of each read')
-        parser.add_argument('-o', '--output', dest='outputDir', metavar='DIR',
-                            default='rna_pipeline_run',
-                            help="Specify the output folder")
-        parser.add_argument('-q', '--minimum_qv', type=int, metavar='INT', 
-                            dest='minQv', default=MIN_QV,
-                            help='Minimum QV to allow after sequence masking')
-        parser.add_argument('-c', '--min_cluster_size', type=int, metavar='INT',
-                            default=MIN_CLUSTER_SIZE,
-                            help='Minimum cluster to generate consensus sequences')
-        parser.add_argument('-l', '--minimum_length', type=int, metavar='INT', 
-                            dest='minLength', default=MIN_LENGTH,
-                            help='Minimun length sequence to allow after masking')
-        parser.add_argument('--clustering_method', metavar='METHOD',
-                            dest='clusteringMethod', default=DEFAULT_METHOD,
-                            choices=CLUSTER_METHODS,
-                            help="Distance algorithm to use in clustering")
-        parser.add_argument('--precluster_diffs', type=int, metavar='INT',
-                            dest='preclusterDiffs', default=PRECLUSTER_DIFFS,
-                            help='Maximum number of differences to allow in pre-clustering')
-        parser.add_argument('-r', '--minimum_ratio', type=float, metavar='FLOAT',
-                            dest='minRatio', default=MIN_RATIO,
-                            help='Minimum ratio of retained bases to allow after masking')
-        parser.add_argument('-A', '--alignment_reference', metavar='REF',
-                            default='silva.both.align', dest='alignmentRef',
-                            help="Reference MSA for aligning query sequences")
-        parser.add_argument('-C', '--chimera_reference', metavar='REF',
-                            default='silva.gold.align', dest='chimeraRef',
-                            help="Reference MSA for Chimera detection")
-        parser.add_argument('--enable_masking', action='store_true',
-                            dest='enableMasking',
-                            help="Turn off the low-quality Masking step")
-        parser.add_argument('--disable_clustering', action='store_false',
-                            dest='enableClustering',
-                            help="Turn off the Clustering and Resequencing steps")
-        parser.add_argument('--disable_consensus', action='store_false',
-                            dest='enableConsensus',
-                            help="Turn off the Consensus step")
-        parser.add_argument('--blasr', metavar='BLASR_PATH', 
-                            help="Specify the path to the Blasr executable")
-        parser.add_argument('--mothur', metavar='MOTHUR_PATH', default='mothur',
-                            help="Specify the path to the Mothur executable")
-        parser.add_argument('--debug', action='store_true',
-                            help="Turn on DEBUG message logging")
-        args = parser.parse_args()
-        print args
-        self.__dict__.update( vars(args) )
 
     def validate_settings(self):
         # Validate the input file
@@ -134,9 +53,6 @@ class rDnaPipeline( object ):
         # Searching for Mothur executable, and set the Mothur Process counter
         self.mothur = validateExecutable( self.mothur )
         self.processCount = 0
-        # Validate numerical parameters
-        validateInt( self.numProc, minValue=0 )
-        validateFloat( self.distance, minValue=MIN_DIST, maxValue=MAX_DIST )
 
     def initialize_output(self):
         # Create the Output directory
@@ -155,7 +71,7 @@ class rDnaPipeline( object ):
         createDirectory( 'log' )
         stdoutLog = os.path.join('log', 'mothur_stdout.log')
         stderrLog = os.path.join('log', 'mothur_stderr.log')
-        self.logFile = os.path.join('log', 'rna_pipeline.log')
+        self.log_file = os.path.join('log', 'rna_pipeline.log')
         # Instantiate the MothurRunner object
         self.factory = MothurRunner( self.mothur, 
                                      self.numProc, 
@@ -163,33 +79,23 @@ class rDnaPipeline( object ):
                                      stderrLog)
 
     def initialize_logger(self):
-        dateFormat = "%Y-%m-%d %I:%M:%S"
-        self.log = logging.getLogger()
         if self.debug:
-            self.log.setLevel( logging.DEBUG )
+            log_level = logging.DEBUG
         else:
-            self.log.setLevel( logging.INFO )
+            log_level = logging.INFO 
         # Initialize the LogHandler for the master log file
-        logHandler = logging.FileHandler( self.logFile )
-        lineFormat = "%(asctime)s %(levelname)s %(processName)s " + \
-                     "%(funcName)s %(lineno)d %(message)s"
-        logFormatter = logging.Formatter(fmt=lineFormat, datefmt=dateFormat)
-        logHandler.setFormatter( logFormatter )
-        self.log.addHandler( logHandler )
-        # Initialize a LogHandler for STDOUT
-        outHandler = logging.StreamHandler( stream=sys.stdout )
-        outLineFormat = "%(asctime)s %(message)s"
-        outFormatter = logging.Formatter(fmt=outLineFormat, datefmt=dateFormat)
-        outHandler.setFormatter( outFormatter )
-        self.log.addHandler( outHandler )
+        logging.basicConfig( level=log_level, 
+                             stream=sys.stdout )
+        logging.basicConfig( level=log_level, 
+                             filename=self.log_file )
         # Record the initialization of the pipeline
-        self.log.info("INFO logger initialized")
-        self.log.debug("DEBUG logger initialized")
-        self.log.info("Initializing RnaPipeline v%s" % __version__)
-        self.log.debug("Using the following parameters:")
+        log.info("INFO logger initialized")
+        log.debug("DEBUG logger initialized")
+        log.info("Initializing rDnaPipeline v%s" % __VERSION__)
+        log.debug("Using the following parameters:")
         for param, value in self.__dict__.iteritems():
-            self.log.debug("\t%s = %s" % (param, value))
-        self.log.info("Initialization of RnaPipeline completed\n")
+            log.debug("\t%s = %s" % (param, value))
+        log.info("Initialization of rDnaPipeline completed\n")
 
     def getProcessLogFile(self, process, isMothurProcess=False):
         if isMothurProcess:
@@ -204,7 +110,7 @@ class rDnaPipeline( object ):
         Return a tuple containing the output file and a boolean flag describing
         whether the output file already exists
         """
-        self.log.info('Preparing to run %s on "%s"' % (processName, inputFile))
+        log.info('Preparing to run %s on "%s"' % (processName, inputFile))
         self.processCount += 1
         if suffix:
             outputFile = predictOutputFile(inputFile, suffix)
@@ -219,25 +125,25 @@ class rDnaPipeline( object ):
     def outputFilesExist( self, outputFile=None, outputList=None ):
         if outputFile:
             if fileExists( outputFile ):
-                self.log.info('Output files detected, skipping process...\n')
+                log.info('Output files detected, skipping process...\n')
                 return True
             else:
-                self.log.info('Output files not found, running process...')
+                log.info('Output files not found, running process...')
                 return False
         elif outputList:
             if allFilesExist( outputList ):
-                self.log.info('Output files detected, skipping process...\n')
+                log.info('Output files detected, skipping process...\n')
                 return True
             else:
-                self.log.info('Output files not found, running process...')
+                log.info('Output files not found, running process...')
                 return False
 
     def checkOutputFile( self, outputFile ):
         if fileExists( outputFile ):
-            self.log.info('Expected output "%s" found' % outputFile)
+            log.info('Expected output "%s" found' % outputFile)
         else:
             msg = 'Expected output "%s" not found!' % outputFile
-            self.log.info( msg )
+            log.info( msg )
             raise IOError( msg )
 
     def processCleanup(self, outputFile=None, outputList=None):
@@ -250,7 +156,7 @@ class rDnaPipeline( object ):
         elif outputList:
             for outputFile in outputList:
                 self.checkOutputFile( outputFile )
-        self.log.info('All expected output files found - process successful!\n')
+        log.info('All expected output files found - process successful!\n')
 
     def writeDummyFile(self, dummyFile):
         with open(dummyFile, 'w') as handle:
@@ -337,16 +243,16 @@ class rDnaPipeline( object ):
         return outputFile
 
     def parseSummaryFile(self, summaryFile):
-        self.log.info('Preparing to run SummaryReader...')
+        log.info('Preparing to run SummaryReader...')
         parser = SummaryReader(summaryFile, self.fraction)
-        self.log.info('Identifying full-length alignment positions...')
+        log.info('Identifying full-length alignment positions...')
         start, end = parser.getFullLengthPositions()
-        self.log.info('Full-length start is NAST Alignment position %s' % start)
-        self.log.info('Full-length end is NAST Alignment position %s' % end)
-        self.log.info('Calculating minimum allowed alignment positions...')
+        log.info('Full-length start is NAST Alignment position %s' % start)
+        log.info('Full-length end is NAST Alignment position %s' % end)
+        log.info('Calculating minimum allowed alignment positions...')
         maxStart, minEnd = parser.getAllowedPositions()
-        self.log.info('Maximum allowed start is NAST Alignment position %s' % maxStart)
-        self.log.info('Minimum allowed end is NAST Alignment position %s\n' % minEnd)
+        log.info('Maximum allowed start is NAST Alignment position %s' % maxStart)
+        log.info('Minimum allowed end is NAST Alignment position %s\n' % minEnd)
         return maxStart, minEnd
 
     def findChimeras(self, alignFile):

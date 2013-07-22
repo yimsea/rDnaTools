@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+
 from pbcore.io.FastqIO import FastqReader, FastqWriter
 from numpy import mean, log10
 
@@ -33,6 +34,26 @@ def predicted_accuracy(record):
 
 
 if __name__ == '__main__':
-    import sys
-    quality_filter = QualityFilter(sys.argv[1], sys.stdout)
-    quality_filter()
+    import argparse
+
+    desc = "A tool for filtering Fastq sequences based on mean predicted accuracy"
+    parser = argparse.ArgumentParser( description=desc )
+
+    add = parser.add_argument
+    add("input_file",
+        metavar="FASTQ",
+        help="A Fastq file of PacBio CCS Sequence data to filter")
+    add("-o", "--output_file",
+        metavar="FILE",
+        default=sys.stdout,
+        help="Location to output the filtered sequence files to [STDOUT]")
+    add("-m", "--min_accuracy",
+        type=float,
+        metavar="FLOAT",
+        help="Minimum average predicted accuracy to filter on [%s]" % MIN_ACCURACY)
+    args = parser.parse_args()
+
+    filter_tool = QualityFilter( args.input_file, 
+                                 args.output_file,
+                                 args.min_accuracy )
+    filter_tool()
