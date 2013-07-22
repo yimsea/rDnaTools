@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 
-
 from pbcore.io.FastqIO import FastqReader, FastqWriter
 from numpy import mean, log10
 
@@ -34,7 +33,7 @@ def predicted_accuracy(record):
 
 
 if __name__ == '__main__':
-    import argparse
+    import argparse, sys
 
     desc = "A tool for filtering Fastq sequences based on mean predicted accuracy"
     parser = argparse.ArgumentParser( description=desc )
@@ -50,6 +49,7 @@ if __name__ == '__main__':
     add("-m", "--min_accuracy",
         type=float,
         metavar="FLOAT",
+        default=MIN_ACCURACY,
         help="Minimum average predicted accuracy to filter on [%s]" % MIN_ACCURACY)
     args = parser.parse_args()
 
