@@ -56,10 +56,10 @@ class rDnaPipeline( object ):
 
     def initialize_output(self):
         # Create the Output directory
-        createDirectory( self.outputDir )
+        createDirectory( self.output )
         # Create a symbolic link from the data file to the output dir
         baseName = os.path.basename( self.sequenceFile )
-        symlinkPath = os.path.join( self.outputDir, baseName )
+        symlinkPath = os.path.join( self.output, baseName )
         if os.path.exists( symlinkPath ):
             pass
         else:
@@ -67,14 +67,14 @@ class rDnaPipeline( object ):
             os.symlink( absPath, symlinkPath )
         self.sequenceFile = baseName
         # Move into the Output directory and create Log directory and files
-        os.chdir( self.outputDir )
+        os.chdir( self.output )
         createDirectory( 'log' )
         stdoutLog = os.path.join('log', 'mothur_stdout.log')
         stderrLog = os.path.join('log', 'mothur_stderr.log')
         self.log_file = os.path.join('log', 'rna_pipeline.log')
         # Instantiate the MothurRunner object
         self.factory = MothurRunner( self.mothur, 
-                                     self.numProc, 
+                                     self.nproc, 
                                      stdoutLog, 
                                      stderrLog)
 
@@ -180,7 +180,7 @@ class rDnaPipeline( object ):
                                         suffix='filter.fastq' )
         if self.outputFilesExist( outputFile=outputFile ):
             return outputFile
-        filter_tool = QualityFilter( fastqFile, outputFile, self.minAccuracy )
+        filter_tool = QualityFilter( fastqFile, outputFile, self.min_accuracy )
         filter_tool()
         self.processCleanup( outputFile=outputFile )
         return outputFile
@@ -211,7 +211,7 @@ class rDnaPipeline( object ):
         self.processCleanup( outputFile=outputFile )
         return outputFile
 
-    def screenSequences(self, alignFile, start=None, end=None, minLength=None):
+    def screenSequences(self, alignFile, start=None, end=None, min_length=None):
         if alignFile.endswith('.align'):
             outputExt = 'good.align'
         elif alignFile.endswith('.fasta'):
@@ -224,7 +224,7 @@ class rDnaPipeline( object ):
         mothurArgs = {'fasta':alignFile,
                       'start':start,
                       'end':end,
-                      'minlength':minLength}
+                      'minlength':min_length}
         logFile = self.getProcessLogFile('screen.seqs', True)
         self.factory.runJob('screen.seqs', mothurArgs, logFile)
         self.processCleanup( outputFile=outputFile )
@@ -508,7 +508,7 @@ class rDnaPipeline( object ):
             maskedFastq = self.maskFastqSequences( alignedFastqFile )
             maskedFasta = self.convertFastqToFasta( maskedFastq )
             screenedFasta = self.screenSequences( maskedFasta,
-                                                  minLength=self.minLength)
+                                                  min_length=self.min_length)
             fileForClustering = screenedFasta
         # Otherwise if masking is disabled, we'll use unique-ify and 
         #    pre-cluster our sequences

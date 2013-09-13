@@ -14,6 +14,7 @@ MIN_LENGTH = 500
 MIN_RATIO = 0.5
 PRECLUSTER_DIFFS = 4
 MIN_CLUSTER_SIZE = 3
+MIN_SNR = 3
 CLUSTER_METHODS = ('nearest', 'average', 'furthest')
 DEFAULT_METHOD = 'average'
 
@@ -33,9 +34,20 @@ def parse_args():
     add('-a', '--minimum_accuracy', 
         type=float, 
         metavar='FLOAT',
-        dest='minAccuracy', 
+        dest='min_accuracy', 
         default=MIN_ACCURACY,
-        help='Minimum predicted sequence accuracy (%s)' % MIN_ACCURACY)
+        help='Minimum predicted sequence accuracy to allow (%s)' % MIN_ACCURACY)
+    add('-l', '--minimum_length', 
+        type=int, 
+        metavar='INT', 
+        dest='min_length', 
+        default=MIN_LENGTH,
+        help='Minimum length sequence to allow (%s)' % MIN_LENGTH)
+    add('-s', '--min_snr',
+        type=float,
+        metavar='FLOAT',
+        default=MIN_SNR,
+        help='Minimum Signal-to-Noise ratio to allow (%s)' % MIN_SNR)
     add('-d', '--distance', 
         type=float, 
         metavar='FLOAT', 
@@ -45,7 +57,7 @@ def parse_args():
         type=int,
         metavar='INT',
         default=NPROC, 
-        dest='numProc', 
+        dest='nproc', 
         help='Number of processors to use (%s)' % NPROC)
     add('-f', '--fraction', 
         type=float, 
@@ -53,7 +65,7 @@ def parse_args():
         default=FRACTION,
         help='Fraction of full-length to require of each read (%s)' % FRACTION)
     add('-o', '--output', 
-        dest='outputDir', 
+        dest='output_dir', 
         metavar='DIR',
         default='rna_pipeline_run',
         help="Specify the output folder")
@@ -68,12 +80,6 @@ def parse_args():
         metavar='INT',
         default=MIN_CLUSTER_SIZE,
         help='Minimum cluster to generate consensus sequences (%s)' % MIN_CLUSTER_SIZE)
-    add('-l', '--minimum_length', 
-        type=int, 
-        metavar='INT', 
-        dest='minLength', 
-        default=MIN_LENGTH,
-        help='Minimun length sequence to allow after masking (%s)' % MIN_LENGTH)
     add('--clustering_method', 
         metavar='METHOD',
         dest='clusteringMethod', 

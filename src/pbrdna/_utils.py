@@ -1,5 +1,4 @@
-import os
-import sys
+import os, sys, logging
 from collections import namedtuple
 
 BlasrM1 = namedtuple('BlasrM1', ['qname', 'tname', 'qstrand', 'tstrand',
@@ -8,43 +7,47 @@ BlasrM1 = namedtuple('BlasrM1', ['qname', 'tname', 'qstrand', 'tstrand',
                                  'qstart', 'qend', 'qlength',
                                  'ncells'])
 
-def fileExists( filename ):
+log = logging.getLogger()
+
+def file_exists( filename ):
     return os.path.exists( filename ) and os.path.getsize( filename ) > 0
 
 def allFilesExist( filenames ):
-    return all( map(fileExists, filenames) )
+    return all( map(file_exists, filenames) )
 
-def isExe( filePath ):
-    if filePath is None:
+def is_executable( filepath ):
+    if filepath is None:
         return False
-    return os.path.isfile(filePath) and os.access(filePath, os.X_OK)
+    return os.path.isfile( filepath ) and os.access( filepath, os.X_OK )
 
-def getZmw( read ):
+def get_zmw( read ):
     parts = read.split('/')
     return '/'.join(parts[0:2])
 
-def splitRootFromExt( inputFile ):
-    root, ext = os.path.splitext( inputFile )
+def split_root_from_ext( input_file ):
+    root, ext = os.path.splitext( input_file )
     if ext == '.h5':
         root, ext = os.path.splitext( root )
         return (root, ext+'.h5')
     return (root, ext)
 
-def predictOutputFile( inputFile, outputType ):
-    root, ext = os.path.splitext( inputFile )
-    return '{0}.{1}'.format(root, outputType)
+def predict_output( input_file, output_type ):
+    root, ext = os.path.splitext( input_file )
+    return '{0}.{1}'.format(root, output_type)
 
-def returnEmpty():
+def return_empty():
     return []
 
-def createDirectory( dirName ):
+def create_directory( dirName ):
     try:
-        os.mkdir( dirName )
+        os.mkdir( dirname )
     except OSError:
         pass
-    if not os.path.isdir( dirName ):
-        raise OSError('Could not create directory "%s"!' % dirName)
-    return dirName
+    if not os.path.isdir( dirname ):
+        msg = 'Could not create directory "%s"!' % dirname
+        log.error( msg )
+        raise OSError( msg )
+    return dirname
 
 def which(program):
     """
@@ -62,70 +65,74 @@ def which(program):
                 return exeFile
     return None
 
-def validateInputFile( fileName, allowedSuffixes ):
-    allowedSuffixes = [allowedSuffixes] if isinstance(str, type(allowedSuffixes)) \
-                                        else allowedSuffixes
-    # First we check whether the input file has a valid suffix
-    try:            
-        assert any( [fileName.endswith(suffix) for suffix in allowedSuffixes] )
-    except AssertionError:
-        raise ValueError('File does not have an allowed suffix! %s' % \
-                                                        allowedSuffixes)
+def validate_input( filename, allowed_suffixes ):
+    if isinstance( allowed_suffixes, str ):
+        allowed_suffixes = [allowed_suffixes]
+    elif isinstance( allowed_suffixes, list ):
+        pass
+    else:
+        msg = 'Allowed suffixes must be either String or List!'
+        log.error( msg )
+        raise TypeError( msg )
+    # First we check whether the file has a valid suffix
+    if not any( [filename.endswith(suffix) for suffix in allowed_suffixes] ):
+        msg = '"%s" does not have an allowed suffix!' % filename
+        log.error( msg )
+        raise ValueError( msg )
     # Next we check whether the input file exists where specified
-    try: 
-        assert fileExists( fileName )
-    except AssertionError:
-        raise OSError('Input file does not exist!')
+    if not file_exists( filename ):
+        msg = 'File %s does not exist!' % filename
+        log.error( msg )
+        raise OSError( msg )
     # Finally we return the absolute path to the file
-    return os.path.abspath( fileName )
+    return os.path.abspath( filename )
 
-def validateOutputFile( fileName ):
-    if fileName in [sys.stdout, sys.stderr]:
-        return fileName
-    return os.path.abspath( fileName )
+def validate_output( filename ):
+    if filename in [sys.stdout, sys.stderr]:
+        return filename
+    return os.path.abspath( filename )
 
-def validateExecutable( executable ):
-    exePath = which( executable )
-    try: 
-        assert exePath is not None
-    except AssertionError:
-        raise ValueError('"%s" is not a valid executable!' % executable)
-    return exePath
+def validate_exe( executable ):
+    """
+    Return the path to an executable if it is valid, otherwise error
+    """
+    path = which( executable )
+    if path is None:
+        msg = '"%s" is not a valid executable!' % executable
+        log.error( msg )
+        raise ValueError( msg )
+    return path
 
-def validateInt( integer, minValue=None, maxValue=None ):
-    try: # First we check whether the supplied parameter is an Int
-        assert isinstance(integer, int)
-    except AssertionError:
-        raise TypeError('Parameter is not an Integer!')
-    # If a minimum value is supplied, compare it to the Integer
-    if minValue is not None:
-        try:
-            assert integer >= minValue
-        except AssertionError:
-            raise ValueError("Integer is less than Minimum Value!")
-    # If a maximum value is supplied, compare it to the Integer
-    if maxValue is not None:
-        try:
-            assert integer <= maxValue
-        except AssertionError:
-            raise ValueError("Integer is greater than Maximum Value!")
-    return integer
+def validate_int( integer, minimum=None, maximum=None ):
+    """
+    Validate an integer by confirming it's type and range
+    """
+    if not isinstance( value, int ):
+        msg = '%s is not an integer!' % variable
+        log.error( msg )
+        raise TypeError( msg )
+    if minimum and value < minimum:
+        msg = '%s is below the minimum value (%s)!' % (variable, minimum)
+        log.error( msg )
+        raise ValueError( msg )
+    if maximum and value > maximum:
+        msg = '%s exceeds the maximum value (%s)!' % (variable, maximum)
+        log.error( msg )
+        raise ValueError( msg )
 
-def validateFloat( floating_point, minValue=None, maxValue=None ):
-    try: # First we check whether the supplied parameter is an Int
-        assert isinstance(floating_point, float)
-    except AssertionError:
-        raise TypeError('Parameter is not a Floating Point!')
-    # If a minimum value is supplied, compare it to the Integer
-    if minValue is not None:
-        try:
-            assert floating_point >= minValue
-        except AssertionError:
-            raise ValueError("Float is less than Minimum Value!")
-    # If a maximum value is supplied, compare it to the Integer
-    if maxValue is not None:
-        try:
-            assert floating_point <= maxValue
-        except AssertionError:
-            raise ValueError("Float is greater than Maximum Value!")
-    return floating_point
+def validate_float( variable, value, minimum=None, maximum=None ):
+    """
+    Validate a float by confirming it's type and range
+    """
+    if not isinstance( value, float ):
+        msg = '%s is not a floating point!' % variable
+        log.error( msg )
+        raise TypeError( msg )
+    if minimum and value < minimum:
+        msg = '%s is below the minimum value (%s)!' % (variable, minimum)
+        log.error( msg )
+        raise ValueError( msg )
+    if maximum and value > maximum:
+        msg = '%s exceeds the maximum value (%s)!' % (variable, maximum)
+        log.error( msg )
+        raise ValueError( msg )
