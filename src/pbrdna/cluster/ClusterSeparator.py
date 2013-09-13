@@ -37,7 +37,7 @@ import subprocess
 from pbrdna.io.FastqIO import FastqReader, FastqWriter
 from pbrdna.io.FastaIO import FastaRecord, FastaWriter  
 from pbrdna.fastq.utils import meanPQv
-from pbrdna._utils import which, getZmw, createDirectory, validateInputFile, validateFloat
+from pbrdna._utils import which, get_zmw, create_directory, validate_input, validate_float
 
 DEFAULT_DIST = 0.03
 MIN_FULL_LENGTH = 1400
@@ -59,7 +59,7 @@ class ClusterSeparator(object):
             self.initializeFromArgs()
         else:
             self.initializeFromCall(listFile, ccsFile, output, distance, min_cluster_size)
-        self.validateSettings()
+        self.validate_settings()
 
     def initializeFromArgs(self):
         import argparse
@@ -100,19 +100,18 @@ class ClusterSeparator(object):
         self.outputReference = True
         self.minRefLength = MIN_FULL_LENGTH
 
-    def validateSettings( self ):
+    def validate_settings( self ):
         # Check the values of the supplied input files
-        self.listFile = validateInputFile( self.listFile, ['.list'])
-        self.ccsFile = validateInputFile( self.ccsFile, ['.fq', '.fastq'])
+        self.listFile = validate_input( self.listFile, ['.list'])
+        self.ccsFile = validate_input( self.ccsFile, ['.fq', '.fastq'])
         # Check the value of the supplied distance
-        self.distance = validateFloat( self.distance, 
-                                       minValue=0.001, 
-                                       maxValue=0.5)
+        validate_float( 'Distance', self.distance, minimum=0.001, 
+                                                   maximum=0.5)
 
     def initializeOutputFolder( self ):
         # Create the output directory if needed and move into it
         self.origin=   os.getcwd()
-        createDirectory( self.outputDir )
+        create_directory( self.outputDir )
         os.chdir( self.outputDir )
 
     #################
@@ -135,7 +134,7 @@ class ClusterSeparator(object):
         self.sequenceData = {}
         self.qualityData = {}
         for fastqRecord in FastqReader( self.ccsFile ):
-            zmw = getZmw( fastqRecord.name )
+            zmw = get_zmw( fastqRecord.name )
             fastqRecord.name = zmw
             self.sequenceData[zmw] = fastqRecord
             self.qualityData[zmw] = meanPQv( fastqRecord )
@@ -151,6 +150,8 @@ class ClusterSeparator(object):
 
     def selectDistance(self, distances):
         # If our selected distance is present, simply return it
+        print self.distance
+        print distances
         if self.distance in distances:
             return self.distance
         # Otherwise find the largest clustering distance smaller than 
@@ -180,7 +181,7 @@ class ClusterSeparator(object):
     def trimClusterNames(self, clusters):
         trimmed = []
         for cluster in clusters:
-            cluster = [getZmw(c) for c in cluster]
+            cluster = [get_zmw(c) for c in cluster]
             trimmed.append( frozenset(cluster) )
         return trimmed
 

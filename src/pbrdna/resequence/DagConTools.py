@@ -32,8 +32,10 @@ import sys
 import logging
 import subprocess
 
-from pbrdna._utils import createDirectory, validateInputFile, validateOutputFile
-from pbrdna._utils import which 
+from pbrdna._utils import (which,
+                           create_directory, 
+                           validate_input, 
+                           validate_output)
 
 SCRIPT_CHOICES = ['gcon.py']
 MODE_CHOICES = ['r', 'd']

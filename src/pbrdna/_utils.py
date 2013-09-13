@@ -12,7 +12,7 @@ log = logging.getLogger()
 def file_exists( filename ):
     return os.path.exists( filename ) and os.path.getsize( filename ) > 0
 
-def allFilesExist( filenames ):
+def all_files_exist( filenames ):
     return all( map(file_exists, filenames) )
 
 def is_executable( filepath ):
@@ -38,7 +38,7 @@ def predict_output( input_file, output_type ):
 def return_empty():
     return []
 
-def create_directory( dirName ):
+def create_directory( dirname ):
     try:
         os.mkdir( dirname )
     except OSError:
@@ -55,13 +55,13 @@ def which(program):
     """
     fpath, fname = os.path.split(program)
     if fpath:
-        if isExe(program):
+        if is_executable(program):
             return program
     else:
         for path in os.environ["PATH"].split(os.pathsep):
             path = path.strip('"')
             exeFile = os.path.join(path, program)
-            if isExe(exeFile):
+            if is_executable(exeFile):
                 return exeFile
     return None
 
@@ -92,7 +92,7 @@ def validate_output( filename ):
         return filename
     return os.path.abspath( filename )
 
-def validate_exe( executable ):
+def validate_executable( executable ):
     """
     Return the path to an executable if it is valid, otherwise error
     """
@@ -103,7 +103,7 @@ def validate_exe( executable ):
         raise ValueError( msg )
     return path
 
-def validate_int( integer, minimum=None, maximum=None ):
+def validate_int( variable, value, minimum=None, maximum=None ):
     """
     Validate an integer by confirming it's type and range
     """

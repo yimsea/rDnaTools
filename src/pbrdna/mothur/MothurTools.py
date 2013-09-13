@@ -1,7 +1,7 @@
 import logging
 import subprocess
 
-from pbrdna._utils import which, fileExists, isExe
+from pbrdna._utils import which, is_executable
 
 __version__ = "0.1"
 
@@ -65,7 +65,7 @@ class MothurJob(object):
     def __init__(self, mothurExe, commands, stdout=None, stderr=None):
         # Validate the supplied Mothur executable
         try:
-            assert isExe(mothurExe)
+            assert is_executable(mothurExe)
             self._mothur = mothurExe
         except AssertionError:
             raise ValueError("Mothur executable is not valid!")
@@ -180,7 +180,7 @@ class MothurRunner(object):
             if self.mothur is None:
                 raise OSError('Mothur executable not found!')
         # If an argument was given, check that it's executable
-        elif isExe( self.mothurExe ):
+        elif is_executable( self.mothurExe ):
             self.mothur = self.mothurExe
         else:
             raise OSError('Supplied Mothur executable not valid!')

@@ -1,7 +1,7 @@
 import os, argparse
 
 from . import __VERSION__
-from _utils import *
+from _utils import validate_int, validate_float
 
 NPROC = 1
 MIN_DIST = 0.001
@@ -146,5 +146,6 @@ def parse_args():
     parser.parse_args( namespace=args )
 
     # Validate numerical parameters
-    validateInt( args.numProc, minValue=0 )
-    validateFloat( args.distance, minValue=MIN_DIST, maxValue=MAX_DIST )
+    validate_int( 'NumProc', args.nproc, minimum=0 )
+    validate_float( 'Distance', args.distance, minimum=MIN_DIST, 
+                                               maximum=MAX_DIST )
