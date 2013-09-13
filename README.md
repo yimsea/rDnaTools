@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-rDnaTools
-=========
-
 Analysis tools for rDNA seqencing using PacBio
 =======
 # rDnaTools #
@@ -61,4 +57,3 @@ use rDnaTools in your work:
 Schloss, P.D., et al., Introducing mothur: Open-source, platform-independent, 
 community-supported software for describing and comparing microbial communities. 
 Appl Environ Microbiol, 2009. 75(23):7537-41.
->>>>>>> c520b971fb304e6af5bda4e232536f1c5f7f68ee
