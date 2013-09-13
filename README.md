@@ -1,5 +1,3 @@
-Analysis tools for rDNA seqencing using PacBio
-=======
 # rDnaTools #
 
 rDnaTools is a python package of tools and pipelines for working with
