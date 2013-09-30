@@ -2,9 +2,10 @@
 
 import os, sys, logging
 
+from pbcore.io.FastaIO import FastaWriter
+
 from pbrdna import __VERSION__
 from pbrdna.arguments import args, parse_args
-from pbrdna.io.FastaIO import FastaWriter
 from pbrdna.io.BasH5IO import BasH5Extractor
 from pbrdna.io.MothurIO import SummaryReader
 from pbrdna.fasta.utils import fasta_count, copy_fasta_sequences

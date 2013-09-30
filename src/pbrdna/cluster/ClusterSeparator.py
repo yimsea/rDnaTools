@@ -34,8 +34,8 @@ import sys
 import logging
 import subprocess
 
-from pbrdna.io.FastqIO import FastqReader, FastqWriter
-from pbrdna.io.FastaIO import FastaRecord, FastaWriter  
+from pbcore.io.FastqIO import FastqReader, FastqWriter
+from pbcore.io.FastaIO import FastaRecord, FastaWriter  
 from pbrdna.fastq.utils import meanPQv
 from pbrdna._utils import which, get_zmw, create_directory, validate_input, validate_float
 

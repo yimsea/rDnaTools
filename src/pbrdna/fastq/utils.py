@@ -1,6 +1,6 @@
 import numpy as np
 
-from pbrdna.io.FastqIO import FastqRecord
+from pbcore.io.FastqIO import FastqRecord
 
 def meanP( record ):
     try:

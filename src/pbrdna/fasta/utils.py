@@ -1,4 +1,4 @@
-from pbrdna.io.FastaIO import FastaReader
+from pbcore.io.FastaIO import FastaReader
 
 def fasta_count( fasta_file ):
     count = 0

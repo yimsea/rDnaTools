@@ -9,8 +9,8 @@ from collections import namedtuple
 from random import random
 from string import maketrans
 
-from pbrdna.io.FastaIO import FastaRecord, FastaReader, FastaWriter
-from pbrdna.io.FastqIO import FastqRecord, FastqReader, FastqWriter
+from pbcore.io.FastaIO import FastaRecord, FastaReader, FastaWriter
+from pbcore.io.FastqIO import FastqRecord, FastqReader, FastqWriter
 
 __version__ = "0.1"
 

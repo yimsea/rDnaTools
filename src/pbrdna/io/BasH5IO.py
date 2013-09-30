@@ -29,8 +29,8 @@
 
 import os, sys, logging
 
-from pbcore.io import BasH5Reader
-from FastqIO import FastqRecord, FastqWriter 
+from pbcore.io.BasH5Reader import BasH5Reader
+from pbcore.io.FastqIO import FastqRecord, FastqWriter 
 
 class BasH5Extractor(object):
     """
