@@ -1,9 +1,9 @@
 import logging
 import subprocess
 
-from pbrdna._utils import which, is_executable
+from pbrdna.utils import which, is_executable
 
-__version__ = "0.1"
+log = logging.getLogger(__name__)
 
 VALID_COMMANDS = frozenset(['fastq.info', 'align.seqs', 'chimera.uchime',
                             'screen.seqs', 'remove.seqs', 'filter.seqs', 
@@ -106,11 +106,11 @@ class MothurJob(object):
                             self.callString)
 
     def __call__(self):
-        logging.info('Executing the following command: %s' % self.displayString)
+        log.info('Executing the following command: %s' % self.displayString)
         p = subprocess.Popen( [self.mothur, self.callString], 
                               stdout=self.stdout, stderr=self.stderr )
         stdout, stderr = p.communicate()
-        logging.info('Mothur command exited successfully')
+        log.info('Mothur command exited successfully')
 
 
 
@@ -197,12 +197,12 @@ class MothurRunner(object):
 
     def createJob(self, command, parameters, logFile=None):
         commands = []
-        logging.info('Creating a MothurCommand for "%s"' % command)
+        log.info('Creating a MothurCommand for "%s"' % command)
         # Check the logFile and create it if needed
         if logFile is None:
-            logging.info('No log-file specified for this job')
+            log.info('No log-file specified for this job')
         else:
-            logging.info('Setting the log-file to "%s"' % logFile)
+            log.info('Setting the log-file to "%s"' % logFile)
             logParams = {'name':logFile}
             logCommand = MothurCommand('set.logfile', logParams)
             commands.append( logCommand )
@@ -212,9 +212,9 @@ class MothurRunner(object):
         return MothurJob(self.mothur, commands, self.stdout, self.stderr)
 
     def addDefaultParameters(self, command, parameters):
-        logging.info('Checking default parameters for "%s"' % command)
+        log.info('Checking default parameters for "%s"' % command)
         if command in NUMPROC_COMMANDS and 'processors' not in parameters:
-            logging.info('Adding default value from "numProc" for "processors"')
+            log.info('Adding default value from "numProc" for "processors"')
             parameters['processors'] = str(self.numProc)
         return parameters
 

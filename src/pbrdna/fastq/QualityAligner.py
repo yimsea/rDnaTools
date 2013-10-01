@@ -12,7 +12,7 @@ from string import maketrans
 from pbcore.io.FastaIO import FastaRecord, FastaReader, FastaWriter
 from pbcore.io.FastqIO import FastqRecord, FastqReader, FastqWriter
 
-__version__ = "0.1"
+logging.getLogger(__name__)
 
 class QualityAligner(object):
     """
@@ -66,7 +66,7 @@ class QualityAligner(object):
 
     def validateSettings(self):
         filename, ext = os.path.splitext( self.fastq )
-        logging.info('Pulling QV data from "%s"' % self.fastq)
+        log.info('Pulling QV data from "%s"' % self.fastq)
         try: # Try/Except Block for FASTQ input
             assert ext in ['.fq', '.fastq']
         except:
@@ -76,8 +76,8 @@ class QualityAligner(object):
             assert ext in ['.fa', '.fsa', '.fasta', '.align']
         except:
             raise ValueError("'%s' is not a recognized FASTA file!" % self.aligned)
-        logging.info('Creating a QualityAligner for "%s"' % self.aligned)
-        logging.info('No log-file set for this process')
+        log.info('Creating a QualityAligner for "%s"' % self.aligned)
+        log.info('No log-file set for this process')
 
     #################
     # Class Methods #
@@ -213,17 +213,17 @@ class QualityAligner(object):
 
     def parseFastqData(self):
         self.sequenceData = {}
-        logging.info('Reading QV data from "%s"...' % self.fastq)
+        log.info('Reading QV data from "%s"...' % self.fastq)
         counter = 0
         for record in FastqReader( self.fastq ):
             zmw = self.getZmw( record )
             self.sequenceData[zmw] = record
             counter += 1
-        logging.info('A total of %s Fastq records were read into memory' % counter)
+        log.info('A total of %s Fastq records were read into memory' % counter)
 
     def alignFastqData(self):
         self.alignedFastqs = []
-        logging.info('Combining data from the Aligned Fasta and Fastq files...')
+        log.info('Combining data from the Aligned Fasta and Fastq files...')
         counter = 0
         for record in FastaReader( self.aligned ):
             zmw = self.getZmw( record )
@@ -242,10 +242,10 @@ class QualityAligner(object):
             updatedRecord = self.addGappedQualities(trimmedFastq, seqParts, record)
             counter += 1
             self.alignedFastqs.append(updatedRecord)
-        logging.info('A total of %s aligned Fastq records were created' % counter)
+        log.info('A total of %s aligned Fastq records were created' % counter)
 
     def writeFastqData(self):
-        logging.info('Writing aligned Fastq data out to "%s"' % self.output)
+        log.info('Writing aligned Fastq data out to "%s"' % self.output)
         with FastqWriter( self.output ) as handle:
             for alignedFastq in self.alignedFastqs:
                 handle.writeRecord( alignedFastq )

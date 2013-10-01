@@ -1,10 +1,12 @@
 #! /usr/bin/env python
 
-import os, sys, logging
+import os
+import logging
 
 from pbcore.io.FastaIO import FastaWriter
 
 from pbrdna import __VERSION__
+from pbrdna.log import initialize_logger
 from pbrdna.arguments import args, parse_args
 from pbrdna.io.BasH5IO import BasH5Extractor
 from pbrdna.io.MothurIO import SummaryReader
@@ -15,7 +17,7 @@ from pbrdna.fastq.QualityMasker import QualityMasker
 from pbrdna.mothur.MothurTools import MothurRunner
 from pbrdna.cluster.ClusterSeparator import ClusterSeparator
 from pbrdna.resequence.DagConTools import DagConRunner
-from pbrdna._utils import (validate_executable,
+from pbrdna.utils import (validate_executable,
                            create_directory,
                            split_root_from_ext,
                            predict_output,
@@ -34,7 +36,10 @@ class rDnaPipeline( object ):
         self.__dict__.update( vars(args) )
         self.validate_settings()
         self.initialize_output()
-        self.initialize_logger()
+        if self.debug:
+            initialize_logger( self.log_file, logging.DEBUG )
+        else:
+            initialize_logger( self.log_file, logging.INFO )
 
     def validate_settings(self):
         # Validate the input file
@@ -83,25 +88,6 @@ class rDnaPipeline( object ):
                                      self.nproc, 
                                      stdoutLog, 
                                      stderrLog)
-
-    def initialize_logger(self):
-        if self.debug:
-            log_level = logging.DEBUG
-        else:
-            log_level = logging.INFO 
-        # Initialize the LogHandler for the master log file
-        logging.basicConfig( level=log_level, 
-                             stream=sys.stdout )
-        logging.basicConfig( level=log_level, 
-                             filename=self.log_file )
-        # Record the initialization of the pipeline
-        log.info("INFO logger initialized")
-        log.debug("DEBUG logger initialized")
-        log.info("Initializing rDnaPipeline v%s" % __VERSION__)
-        log.debug("Using the following parameters:")
-        for param, value in self.__dict__.iteritems():
-            log.debug("\t%s = %s" % (param, value))
-        log.info("Initialization of rDnaPipeline completed\n")
 
     def getProcessLogFile(self, process, isMothurProcess=False):
         if isMothurProcess:

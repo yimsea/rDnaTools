@@ -9,10 +9,10 @@ from numpy import where
 
 from pbrdna.io.FastqIO import FastqReader, FastqRecord, FastqWriter
 
-__version__ = "0.1"
-
 MIN_QV = None
 MIN_LENGTH = 100
+
+log = logging.getLogger(__name__)
 
 class QualityTrimmer(object):
     """
@@ -53,7 +53,7 @@ class QualityTrimmer(object):
 
     def initializeFromCall(self, fastqFile, outputFile, minQv):
         self.fastq = fastqFile
-        logging.info('Creating a QualityMasker for "%s"' % self.fastq)
+        log.info('Creating a QualityMasker for "%s"' % self.fastq)
         # If no output file is set, default to STDOUT
         if outputFile is None:
             self.output = sys.stdout
@@ -61,12 +61,12 @@ class QualityTrimmer(object):
             self.output = outputFile
         # If no minimum QV is set, use the default value
         if minQv is None:
-            logging.info('No minimum QV specified, using default value %s' % self.minQV)
+            log.info('No minimum QV specified, using default value %s' % self.minQV)
             self.minQv = MIN_QV
         else:
-            logging.info('Minimum QV specified as %s' % minQv)
+            log.info('Minimum QV specified as %s' % minQv)
             self.minQv = minQv
-        logging.info('No log-file set for this process')
+        log.info('No log-file set for this process')
 
     def validateSettings(self):
         filename, ext = os.path.splitext( self.fastq )
@@ -85,7 +85,7 @@ class QualityTrimmer(object):
 
     def parseFastqData(self):
         self.fastqData = []
-        logging.info('Reading Fastq data into memory from %s...' % self.fastq)
+        log.info('Reading Fastq data into memory from %s...' % self.fastq)
         for fastqRecord in FastqReader( self.fastq ):
             self.fastqData.append( fastqRecord )
 
@@ -113,21 +113,21 @@ class QualityTrimmer(object):
 
     def trimFastqData(self):
         self.trimmedFastqs = []
-        logging.info('Trimming low quality bases...')
+        log.info('Trimming low quality bases...')
         for fastqRecord in self.fastqData:
             trimmedFastq = self.trimFastqRecord( fastqRecord )
             self.trimmedFastqs.append( trimmedFastq )
 
     def filterFastqData(self):
         self.filteredFastqs = []
-        logging.info('Filtering out short and empty sequences...')
+        log.info('Filtering out short and empty sequences...')
         for fastqRecord in self.trimmedFastqs:
             if len(fastqRecord.sequence) < self.minLength:
                 continue
             self.filteredFastqs.append( fastqRecord )
 
     def writeFastqData(self):
-        logging.info('Writing the trimmed FASTQ data out to "%s"...' % self.output)
+        log.info('Writing the trimmed FASTQ data out to "%s"...' % self.output)
         with FastqWriter( self.output ) as writer: 
             for fastqRecord in self.filteredFastqs:
                 writer.writeRecord( fastqRecord )

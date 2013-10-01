@@ -1,7 +1,7 @@
 import os, argparse
 
 from . import __VERSION__
-from _utils import validate_int, validate_float
+from utils import validate_int, validate_float
 
 NPROC = 1
 MIN_DIST = 0.001

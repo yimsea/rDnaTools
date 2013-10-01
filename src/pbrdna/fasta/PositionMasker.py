@@ -46,7 +46,7 @@ class PositionMasker(object):
 
     def initializeFromCall(self, fastqFile, outputFile, minQv):
         self.fastq = fastqFile
-        logging.info('Creating a QualityMasker for "%s"' % self.fastq)
+        log.info('Creating a QualityMasker for "%s"' % self.fastq)
         # If no output file is set, default to STDOUT
         if outputFile is None:
             self.output = sys.stdout
@@ -54,12 +54,12 @@ class PositionMasker(object):
             self.output = outputFile
         # If no minimum QV is set, use the default value
         if minQv is None:
-            logging.info('No minimum QV specified, using default value %s' % self.minQV)
+            log.info('No minimum QV specified, using default value %s' % self.minQV)
             self.minQv = self.MIN_QV
         else:
-            logging.info('Minimum QV specified as %s' % minQv)
+            log.info('Minimum QV specified as %s' % minQv)
             self.minQv = minQv
-        logging.info('No log-file set for this process')
+        log.info('No log-file set for this process')
 
     def validateSettings(self):
         filename, ext = os.path.splitext( self.fastq )
@@ -91,19 +91,19 @@ class PositionMasker(object):
 
     def parseFastqData(self):
         self.fastqData = []
-        logging.info('Reading Fastq data into memory from %s...' % self.fastq)
+        log.info('Reading Fastq data into memory from %s...' % self.fastq)
         for fastqRecord in FastqReader( self.fastq ):
             self.fastqData.append( fastqRecord )
 
     def maskFastqData(self):
         self.maskedFastqs = []
-        logging.info('Masking low quality bases')
+        log.info('Masking low quality bases')
         for fastqRecord in self.fastqData:
             maskedFastq = self.maskFastqRecord( fastqRecord )
             self.maskedFastqs.append( maskedFastq )
 
     def writeFastqData(self):
-        logging.info('Writing the masked Fastq data out to "%s"...' % self.output)
+        log.info('Writing the masked Fastq data out to "%s"...' % self.output)
         with FastqWriter( self.output ) as writer: 
             for fastqRecord in self.maskedFastqs:
                 writer.writeRecord( fastqRecord )

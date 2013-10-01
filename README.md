@@ -14,6 +14,7 @@ Though primarily intended for use in analyzing 16S rDNA sequences, the
 same tools and approaches should apply equally well to 18S, 23S, or ITS
 sequences, provided that suitable reference sequences are supplied.
 
+
 ## Requirements ##
 
 The core functionality of rDnaTools is built upon Python2.7 using the
@@ -25,24 +26,24 @@ that must available for the package to function
 * Blasr (www.github.com/PacificBiosciences/blasr)
 * Mothur (www.mothur.org)
 
-rDnaTools also includes the capability to generate high-quality consensus 
-sequences from clusters of ribosomal DNA reads using algorithms 
-included in the Pacific Biosciences SMRT Analysis suite.
-* SMRTanalysis (www.pacbiodevnet.com)
 
-## Primary Tools ##
+## rDnaPipeline ##
 
-rDnaTools contains two primary tools for analyzing rDNA sequence data
-* rDnaPipeline
-* rDnaResequencer
+The primary tool for analyzing rDNA sequence data is a script called
+"rDnaPipeline", which takes as an input PacBio sequence data from ribosomal
+DNA amplicons.  The pipeline accepts data in either FOFN, BAS.H5, FASTA, or
+FASTQ format, and runs a sequential series of analyses, similar to Mothur`s
+Batch Mode.  The analysis is based on Mothur's recommended SOP for analyzing
+454 rDNA sequence tags, with some modifications to account for the unique
+nature of PacBio's data.
 
-The rDnaPipeline takes as an input PacBio sequence data from ribosomal
-DNA amplicons, in either FOFN, BAS.H5, FASTA, or FASTQ formate, and runs a
-sequential series of analyses, similar to Mothur`s Batch Mode.
+If the executables for Blasr and Mothur are in the user's PATH, then basic call
+to rDnaPipeline.py will look as follows:
+rDnaPipeline.py <Sequence File> -n <Processors> -A <Reference Alignment> -C <Alignment for Chimera Detection>
 
-The rDnaResequencer tool generates consensus sequences from clusters of
-PacBio ribosomal DNA sequences.  The Resequencer tool can be called either
-independently, or as part of the rDnaPipeline.
+For the reference files, we recommend using the curated SILVA alignments provided
+on the Mothur website (http://www.mothur.org/wiki/Silva_reference_files).
+
 
 ## Citation ##
 

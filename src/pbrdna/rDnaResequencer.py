@@ -29,14 +29,14 @@
 
 import os
 import sys
-import logging
+import log
 import subprocess
 
 from io.FastqIO import FastqReader, FastqWriter
 from io.FastaIO import FastaRecord, FastaWriter  
 
-from _utils import createDirectory, validateInputFile, validateOutputFile
-from _utils import which, getZmw
+from utils import createDirectory, validateInputFile, validateOutputFile
+from utils import which, getZmw
 
 DEFAULT_DIST = 0.03
 DEFAULT_MIN_CLUSTER = 2

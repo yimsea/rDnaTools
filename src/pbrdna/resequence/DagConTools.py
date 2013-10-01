@@ -28,14 +28,9 @@
 #################################################################################$$
 
 import os
-import sys
-import logging
 import subprocess
 
-from pbrdna._utils import (which,
-                           create_directory, 
-                           validate_input, 
-                           validate_output)
+from pbrdna.utils import which
 
 SCRIPT_CHOICES = ['gcon.py']
 MODE_CHOICES = ['r', 'd']
@@ -67,8 +62,10 @@ class DagConRunner(object):
                 assert self.mode in MODE_CHOICES
             except:
                 raise ValueError("Gcon.py runners must specify mode 'r' or 'd'")
-        # Finally, if the script and options pass, find the absolute pathes
+        # Finally, if the script and options pass, find the absolute paths
+        print self.script
         self.executable = which( self.script )
+        print self.executable
 
     ####################
     # Instance Methods #

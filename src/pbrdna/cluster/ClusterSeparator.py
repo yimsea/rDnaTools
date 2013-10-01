@@ -34,10 +34,10 @@ import sys
 import logging
 import subprocess
 
-from pbcore.io.FastqIO import FastqReader, FastqWriter
+from pbcore.io.FastqIO import FastqRecord, FastqReader, FastqWriter
 from pbcore.io.FastaIO import FastaRecord, FastaWriter  
 from pbrdna.fastq.utils import meanPQv
-from pbrdna._utils import which, get_zmw, create_directory, validate_input, validate_float
+from pbrdna.utils import get_zmw, create_directory, validate_input, validate_float
 
 DEFAULT_DIST = 0.03
 MIN_FULL_LENGTH = 1400
@@ -133,11 +133,11 @@ class ClusterSeparator(object):
     def parseSequenceData(self):
         self.sequenceData = {}
         self.qualityData = {}
-        for fastqRecord in FastqReader( self.ccsFile ):
-            zmw = get_zmw( fastqRecord.name )
-            fastqRecord.name = zmw
-            self.sequenceData[zmw] = fastqRecord
-            self.qualityData[zmw] = meanPQv( fastqRecord )
+        for record in FastqReader( self.ccsFile ):
+            zmw = get_zmw( record.name )
+            new_record = FastqRecord(zmw, record.sequence, record.quality)
+            self.sequenceData[zmw] = new_record
+            self.qualityData[zmw] = meanPQv(new_record)
 
     def parseDistances(self):
         distances = []

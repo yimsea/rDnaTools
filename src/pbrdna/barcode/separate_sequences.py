@@ -1,5 +1,7 @@
 #! /usr/bin/env python
-import csv, sys, logging
+import csv
+import sys
+import logging
 
 from collections import namedtuple
 from pbcore.io.FastaIO import FastaReader, FastaWriter
@@ -80,7 +82,7 @@ def get_filetype( filename ):
         raise TypeError( msg )
 
 if __name__ == '__main__':
-    logging.basicConfig( level=logging.INFO )
+    log.basicConfig( level=log.INFO )
 
     sequence_file = sys.argv[1]
     barcode_file = sys.argv[2]

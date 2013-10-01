@@ -27,10 +27,14 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #################################################################################$$
 
-import os, sys, logging
+import os
+import sys
+import logging
 
 from pbcore.io.BasH5Reader import BasH5Reader
 from pbcore.io.FastqIO import FastqRecord, FastqWriter 
+
+log = logging.getLogger(__name__)
 
 class BasH5Extractor(object):
     """
@@ -74,8 +78,8 @@ class BasH5Extractor(object):
     def validate_settings(self):
         if self.input_file.endswith('.bas.h5') or \
            self.input_file.endswith('.fofn'):
-            logging.info('Creating a BasH5Extractor for "{0}"'.format(self.input_file))
-            logging.info('Outputing extracted reads to "{0}"'.format(self.output))
+            log.info('Creating a BasH5Extractor for "{0}"'.format(self.input_file))
+            log.info('Outputing extracted reads to "{0}"'.format(self.output))
         else: 
             raise ValueError('Input files must be either FOFN or BasH5!')
 
@@ -89,7 +93,7 @@ class BasH5Extractor(object):
     def add_bash5_reader(self, bash5_file):
         filepath = os.path.realpath( bash5_file )
         path, filename = os.path.split( filepath )
-        logging.info('Creating a BasH5Reader for "{0}"'.format(filename))
+        log.info('Creating a BasH5Reader for "{0}"'.format(filename))
         self.bash5_readers.append( BasH5Reader( filepath ) )
 
     def parse_fofn_file(self, fofn_file):
@@ -100,8 +104,10 @@ class BasH5Extractor(object):
                     continue
                 if fofn_entry.endswith('.bas.h5'):
                     self.add_bash5_reader( fofn_entry )
+                elif fofn_entry.endswith('.bax.h5'):
+                    self.add_bash5_reader( fofn_entry )
                 else:
-                    raise ValueError('FOFN must contain only BasH5 files!')
+                    raise ValueError('FOFN must contain only BasH5 and BaxH5 files!')
 
     #################
     # Class Methods #
@@ -109,7 +115,7 @@ class BasH5Extractor(object):
 
     @classmethod
     def writeCcsFastq(cls, basH5Reader, fastqWriter):
-        logging.info('Writing Fastq CCS reads from "%s"...' % basH5Reader.movieName)
+        log.info('Writing Fastq CCS reads from "%s"...' % basH5Reader.movieName)
         for zmw in basH5Reader:
             if zmw.ccsRead:
                 fastqRecord = FastqRecord(zmw.ccsRead.readName,
@@ -119,7 +125,7 @@ class BasH5Extractor(object):
 
     @classmethod
     def writeSubreadFastq(cls, basH5Reader, fastqWriter):
-        logging.info('Writing Fastq subreads from "%s"...' % basH5Reader.movieName)
+        log.info('Writing Fastq subreads from "%s"...' % basH5Reader.movieName)
         for zmw in basH5Reader:
             for subread in zmw.subreads():
                 fastqRecord = FastqRecord(subread.readName,
@@ -132,13 +138,13 @@ class BasH5Extractor(object):
     ####################
 
     def outputCcsFastq(self):
-        logging.info('Parsing Fastq CCS reads from input BAS.H5 files')
+        log.info('Parsing Fastq CCS reads from input BAS.H5 files')
         with FastqWriter(self.output) as writer:
             for reader in self.bash5_readers:
                 self.writeCcsFastq( reader, writer )
 
     def outputSubreadFastq(self):
-        logging.info('Parsing Fastq subreads from input BAS.H5 files')
+        log.info('Parsing Fastq subreads from input BAS.H5 files')
         with FastqWriter(self.output) as writer:
             for reader in self.bash5_readers:
                 self.writeSubreadFastq( reader, writer )

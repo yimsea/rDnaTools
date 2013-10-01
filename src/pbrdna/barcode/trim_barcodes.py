@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import csv, sys, logging
+import csv, sys, log
 
 from collections import namedtuple
 from pbcore.io.FastaIO import FastaReader, FastaWriter, FastaRecord
@@ -7,7 +7,7 @@ from pbcore.io.FastqIO import FastqReader, FastqWriter, FastqRecord
 
 barcode = namedtuple('barcode', 'id strand seen5 seenA seen3 end5 endA end3 primer')
 
-log = logging.getLogger()
+log = log.getLogger()
 
 class BarcodeTrimmer( object ):
 
@@ -114,7 +114,7 @@ def get_filetype( filename ):
         raise TypeError( msg )
 
 if __name__ == '__main__':
-    logging.basicConfig( level=logging.INFO )
+    log.basicConfig( level=log.INFO )
 
     sequence_file = sys.argv[1]
     barcode_file = sys.argv[2]
