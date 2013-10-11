@@ -11,7 +11,7 @@ from pbrdna.arguments import args, parse_args
 from pbrdna.io.extract_ccs import extract_ccs
 from pbrdna.io.MothurIO import SummaryReader
 from pbrdna.fasta.utils import fasta_count, copy_fasta_sequences
-from pbrdna.fastq.QualityFilter import QualityFilter
+from pbrdna.fastq.quality_filter import quality_filter
 from pbrdna.fastq.QualityAligner import QualityAligner
 from pbrdna.fastq.QualityMasker import QualityMasker
 from pbrdna.mothur.MothurTools import MothurRunner
@@ -167,12 +167,11 @@ class rDnaPipeline( object ):
 
     def filter_fastq(self, fastqFile):
         outputFile = self.process_setup( fastqFile, 
-                                        'FilterQuality', 
-                                        suffix='filter.fastq' )
+                                         'FilterQuality',
+                                         suffix='filter.fastq' )
         if self.outputFilesExist( outputFile=outputFile ):
             return outputFile
-        filter_tool = QualityFilter( fastqFile, outputFile, self.min_accuracy )
-        filter_tool()
+        quality_filter( fastqFile, outputFile )
         self.processCleanup( outputFile=outputFile )
         return outputFile
 
