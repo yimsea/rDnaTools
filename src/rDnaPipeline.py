@@ -8,7 +8,7 @@ from pbcore.io.FastaIO import FastaWriter
 from pbrdna import __VERSION__
 from pbrdna.log import initialize_logger
 from pbrdna.arguments import args, parse_args
-from pbrdna.io.BasH5IO import BasH5Extractor
+from pbrdna.io.extract_ccs import extract_ccs
 from pbrdna.io.MothurIO import SummaryReader
 from pbrdna.fasta.utils import fasta_count, copy_fasta_sequences
 from pbrdna.fastq.QualityFilter import QualityFilter
@@ -18,11 +18,11 @@ from pbrdna.mothur.MothurTools import MothurRunner
 from pbrdna.cluster.ClusterSeparator import ClusterSeparator
 from pbrdna.resequence.DagConTools import DagConRunner
 from pbrdna.utils import (validate_executable,
-                           create_directory,
-                           split_root_from_ext,
-                           predict_output,
-                           file_exists,
-                           all_files_exist)
+                          create_directory,
+                          split_root_from_ext,
+                          get_output_name,
+                          file_exists,
+                          all_files_exist)
 
 log = logging.getLogger(__name__)
 
@@ -105,12 +105,12 @@ class rDnaPipeline( object ):
         log.info('Preparing to run %s on "%s"' % (processName, inputFile))
         self.processCount += 1
         if suffix:
-            outputFile = predict_output(inputFile, suffix)
+            outputFile = get_output_name(inputFile, suffix)
             return outputFile
         elif suffixList:
             outputFiles = []
             for suffix in suffixList:
-                outputFile = predict_output( inputFile, suffix )
+                outputFile = get_output_name( inputFile, suffix )
                 outputFiles.append( outputFile )
             return outputFiles
 
@@ -155,14 +155,13 @@ class rDnaPipeline( object ):
             handle.write('DONE')
         return dummyFile
 
-    def extractCcsFromBasH5(self, inputFile):
+    def extract_raw_ccs(self, inputFile):
         outputFile = self.process_setup( inputFile, 
-                                        'extractCcsFromBasH5', 
-                                        suffix='fastq' )
+                                         'extractCcsFromBasH5',
+                                         suffix='fastq' )
         if self.outputFilesExist( outputFile=outputFile ):
             return outputFile
-        extractor = BasH5Extractor( inputFile, outputFile )
-        extractor.outputCcsFastq()
+        extract_ccs(inputFile, outputFile)
         self.processCleanup( outputFile=outputFile )
         return outputFile
 
@@ -471,7 +470,7 @@ class rDnaPipeline( object ):
 
     def run(self):
         if self.dataType == 'bash5':
-            fastqFile = self.extractCcsFromBasH5( self.sequenceFile )
+            fastqFile = self.extract_raw_ccs( self.sequenceFile )
         elif self.dataType == 'fastq':
             fastqFile = self.sequenceFile
         elif self.dataType == 'fasta':

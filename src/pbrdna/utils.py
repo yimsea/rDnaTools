@@ -33,7 +33,7 @@ def split_root_from_ext( input_file ):
         return (root, ext+'.h5')
     return (root, ext)
 
-def predict_output( input_file, output_type ):
+def get_output_name( input_file, output_type ):
     root, ext = os.path.splitext( input_file )
     return '{0}.{1}'.format(root, output_type)
 

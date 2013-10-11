@@ -32,7 +32,7 @@ import sys
 import logging
 
 from pbcore.io.BasH5Reader import BasH5Reader
-from pbcore.io.FastqIO import FastqRecord, FastqWriter 
+from pbcore.io.FastqIO import FastqRecord, FastqWriter
 
 log = logging.getLogger(__name__)
 
