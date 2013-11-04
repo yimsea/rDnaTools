@@ -9,7 +9,7 @@ if ("install" in sys.argv) and sys.version_info < (2, 7, 0):
 
 setup(
     name = 'rDnaTools',
-    version='0.1.1',
+    version='0.1.2',
     author='Brett Bowman',
     author_email='bbowman@pacificbiosciences.com',
     url='https://github.com/bnbowman/rDnaTools',
