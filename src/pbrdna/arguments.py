@@ -28,19 +28,20 @@ def parse_args():
     parser = argparse.ArgumentParser( description=desc )
 
     add = parser.add_argument
-    add('sequenceFile', 
+    add('input_file',
         metavar='FILE',
         help="File of rRNA sequencing data to use")
-    add('-a', '--minimum_accuracy', 
+    add('-r', '--raw_data',
+        metavar='FILE',
+        help='BasH5, BaxH5 or FOFN of raw H5-format sequence data')
+    add('-a', '--min_accuracy',
         type=float, 
         metavar='FLOAT',
-        dest='min_accuracy', 
         default=MIN_ACCURACY,
         help='Minimum predicted sequence accuracy to allow (%s)' % MIN_ACCURACY)
-    add('-l', '--minimum_length', 
+    add('-l', '--min_length',
         type=int, 
         metavar='INT', 
-        dest='min_length', 
         default=MIN_LENGTH,
         help='Minimum length sequence to allow (%s)' % MIN_LENGTH)
     add('-s', '--min_snr',
@@ -69,10 +70,9 @@ def parse_args():
         metavar='DIR',
         default='rna_pipeline_run',
         help="Specify the output folder")
-    add('-q', '--minimum_qv', 
+    add('-q', '--min_qv',
         type=int, 
-        metavar='INT', 
-        dest='minQv', 
+        metavar='INT',
         default=MIN_QV,
         help='Minimum QV to allow after sequence masking (%s)' % MIN_QV)
     add('-c', '--min_cluster_size', 
@@ -89,39 +89,29 @@ def parse_args():
     add('--precluster_diffs', 
         type=int, 
         metavar='INT',
-        dest='preclusterDiffs', 
         default=PRECLUSTER_DIFFS,
         help='Maximum number of differences to allow in pre-clustering (%s)' % PRECLUSTER_DIFFS)
-    add('-r', '--minimum_ratio', 
-        type=float, 
-        metavar='FLOAT',
-        dest='minRatio', 
-        default=MIN_RATIO,
-        help='Minimum ratio of retained bases to allow after masking (%s)' % MIN_RATIO)
     add('-A', '--alignment_reference', 
         metavar='REF',
-        default='silva.both.align', 
-        dest='alignmentRef',
+        default='silva.both.align',
         help="Reference MSA for aligning query sequences")
     add('-C', '--chimera_reference', 
         metavar='REF',
-        default='silva.gold.align', 
-        dest='chimeraRef',
+        default='silva.gold.align',
         help="Reference MSA for Chimera detection")
     add('--enable_masking', 
         action='store_true',
-        dest='enableMasking',
         help="Turn off the low-quality Masking step")
     add('--sub_cluster',
         action="store_true",
         help="Subcluster each OTU to separate individual rDNA alleles")
     add('--disable_clustering', 
         action='store_false',
-        dest='enableClustering',
+        dest='enable_clustering',
         help="Turn off the Clustering and Resequencing steps")
     add('--disable_consensus', 
         action='store_false',
-        dest='enableConsensus',
+        dest='enable_consensus',
         help="Turn off the Consensus step")
     add('--blasr', 
         metavar='BLASR_PATH', 

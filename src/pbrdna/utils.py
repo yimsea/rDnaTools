@@ -11,6 +11,28 @@ BlasrM1 = namedtuple('BlasrM1', ['qname', 'tname', 'qstrand', 'tstrand',
 
 log = logging.getLogger(__name__)
 
+def is_fasta( filename ):
+    if filename.endswith('.fa') or \
+       filename.endswith('.fna') or \
+       filename.endswith('.fasta'):
+        return True
+    return False
+
+def is_fastq( filename ):
+    if filename.endswith('.fq') or \
+       filename.endswith('.fastq'):
+        return True
+    return False
+
+def is_bash5( filename ):
+    if filename.endswith('.bas.h5') or \
+       filename.endswith('.bax.h5'):
+        return True
+    return False
+
+def is_fofn( filename ):
+    return filename.endswith('.fofn')
+
 def file_exists( filename ):
     return os.path.exists( filename ) and os.path.getsize( filename ) > 0
 

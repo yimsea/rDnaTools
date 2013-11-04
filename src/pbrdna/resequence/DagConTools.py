@@ -63,9 +63,7 @@ class DagConRunner(object):
             except:
                 raise ValueError("Gcon.py runners must specify mode 'r' or 'd'")
         # Finally, if the script and options pass, find the absolute paths
-        print self.script
         self.executable = which( self.script )
-        print self.executable
 
     ####################
     # Instance Methods #

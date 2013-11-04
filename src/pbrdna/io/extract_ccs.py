@@ -33,7 +33,7 @@ import os
 import sys
 import logging
 
-from pbcore.io.BasH5Reader import BasH5Reader
+from pbcore.io.BasH5IO import BasH5Collection
 from pbcore.io.FastqIO import FastqRecord, FastqWriter 
 
 from pbrdna.arguments import args, MIN_LENGTH, MIN_SNR
@@ -51,52 +51,20 @@ def extract_ccs( input_file, output_file=None,
     Extract CCS reads from an input_file
     """
     output_file = output_file or get_output_name( input_file, 'fastq' )
-    readers = parse_input_file( input_file )
-    output_fastq( output_file, readers, min_length, min_snr )
+    collection = BasH5Collection( input_file )
+    output_fastq( collection, output_file, min_length, min_snr )
     return output_file
 
-def parse_input_file( input_file ):
-    """
-    Convert the input file into a list of BasH5Readers
-    """
-    if input_file.endswith('.bas.h5') or input_file.endswith('.bax.h5'):
-        return [create_reader( input_file )]
-    elif input_file.endswith('.fofn'):
-        return list(parse_fofn_file( input_file ))
-    else:
-        msg = 'Input file must be BasH5, BaxH5, or FOFN'
-        log.error( msg )
-        raise TypeError( msg )
-
-def create_reader( bash5_file ):
-    filepath = os.path.realpath( bash5_file )
-    path, filename = os.path.split( filepath )
-    log.info('Creating a BasH5Reader for {0}'.format(filename))
-    return BasH5Reader( filepath )
-
-def parse_fofn_file( fofn_file ):
-    with open(fofn_file, 'r') as handle:
-        for line in handle:
-            fofn_entry = line.strip()
-            if not fofn_entry:
-                continue
-            if fofn_entry.endswith('.bas.h5') or fofn_entry.endswith('.bax.h5'):
-                yield create_reader( fofn_entry )
-            else:
-                msg = 'FOFN entries must be BasH5 or BaxH5'
-                log.error( msg )
-                raise ValueError( msg )
-
-def output_fastq( output_file, readers, min_length, min_snr ):
+def output_fastq( collection, output_file, min_length, min_snr ):
     log.info('Extracting fastq CCS reads from input files')
     ccs_total = 0
     pass_total = 0
     with FastqWriter( output_file ) as writer:
-        for reader in readers:
+        for movie in collection.movieNames:
             log.info('Extracting fastq CCS reads from %s' % os.path.basename(reader.filename))
             ccs_count = 0
             pass_count = 0
-            for zmw in reader:
+            for zmw in collection[movie].sequencingZmws:
 
                 # Skip non-CCS ZMWs
                 if not zmw.ccsRead:

@@ -3,12 +3,8 @@
 rDnaTools is a python package of tools and pipelines for working with
 ribosomal DNA sequence data generated with the PacBio(R) SMRT sequencing.
 rDnaTools works by wrapping existing tools from microbial ecology,
-primarily the Mothur suite of utilities.
-
-Currently rDnaTools implements a single pipeline for the export, filtering,
-and cluster of 16S sequences.  Future releases will include automated
-pipelines for other use-cases, as well as the capability for users to
-script their own pipelines for rDNA sequence analysis.
+primarily the Mothur suite of utilities.  Currently rDnaTools implements
+a single pipeline for the export, filtering, and cluster of 16S sequences.
 
 Though primarily intended for use in analyzing 16S rDNA sequences, the
 same tools and approaches should apply equally well to 18S, 23S, or ITS
@@ -23,6 +19,7 @@ wraps the functionality from a number of stand-alone commandline tools
 that must available for the package to function
 * Python 2.7 (www.python.org)
 * pbcore (www.github.com/PacificBiosciences/pbcore)
+* pbdagcon (www.github.com/PacificBiosciences/pbdagcon)
 * Blasr (www.github.com/PacificBiosciences/blasr)
 * Mothur (www.mothur.org)
 
@@ -37,9 +34,20 @@ Batch Mode.  The analysis is based on Mothur's recommended SOP for analyzing
 454 rDNA sequence tags, with some modifications to account for the unique
 nature of PacBio's data.
 
-If the executables for Blasr and Mothur are in the user's PATH, then basic call
-to rDnaPipeline.py will look as follows:
-rDnaPipeline.py <Sequence File> -n <Processors> -A <Reference Alignment> -C <Alignment for Chimera Detection>
+Since rDnaPipeline analyzes PacBio Circular-Consensus Sequence (CCS) data,
+The basic call to the rDnaPipeline will vary slightly depending on what version
+of SMRT Analysis is being used, as the methods by which CCS data is generated
+and presented has changed.
+
+If the rDNA sequence generated on a PacBio RS running SMRT Analysis v2.0, then
+the basic call to rDnaPipeline.py will look as follows:
+rDnaPipeline.py FOFN -n PROCS -A ALIGNMENT_REF -C CHIMERA_REF
+
+If the rDNA sequence generated on a PacBio RS running SMRT Analysis v2.1, then
+running rDnaPipeline is a two-step process.  First the Reads_of_Insert protocol
+must be run as normal on the sequencing data to generate CCS data for the data-set.
+Then rDnaPipeline.py is called as follows:
+rDnaPipeline.py READS_OF_INSERT -r FOFN -n PROCS -A ALIGNMENT_REF -C CHIMERA_REF
 
 For the reference files, we recommend using the curated SILVA alignments provided
 on the Mothur website (http://www.mothur.org/wiki/Silva_reference_files).

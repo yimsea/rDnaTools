@@ -58,9 +58,9 @@ class rDnaResequencer(object):
             self.initializeFromArgs()
         else:
             self.initializeFromCall(listFile, seqFile, distance)
-        self.validateSettings()
-        self.initializeOutput()
-        self.parseSequenceData()
+        self.validate_settings()
+        self.initialize_output()
+        self.parse_sequence_data()
 
     def initializeFromArgs(self):
         import argparse
@@ -93,7 +93,7 @@ class rDnaResequencer(object):
         self.distance = DEFAULT_DIST if distance is None else distance
         self.output = sys.stdout
 
-    def validateSettings(self):
+    def validate_settings(self):
         # Check the values of the supplied input and output files
         self.listFile = validateInputFile( self.listFile, ['.list'])
         self.ccsFile = validateInputFile( self.ccsFile, ['.fastq'])
@@ -111,7 +111,7 @@ class rDnaResequencer(object):
         self.loadPulses = which('loadPulses')
         self.variantCaller = which('variantCaller.py')
 
-    def initializeOutput(self):
+    def initialize_output(self):
         createDirectory( self.outputDir )
         os.chdir( self.outputDir )
 
@@ -140,7 +140,7 @@ class rDnaResequencer(object):
                 distances.append( distance )
         return distances
 
-    def parseSequenceData(self):
+    def parse_sequence_data(self):
         self.sequenceData = {}
         for fastqRecord in FastqReader( self.ccsFile ):
             zmw = getZmw( fastqRecord.name )
