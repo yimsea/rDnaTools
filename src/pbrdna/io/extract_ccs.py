@@ -46,25 +46,28 @@ SNR = args.min_snr if hasattr(args, 'min_snr') else MIN_SNR
 
 def extract_ccs( input_file, output_file=None,
                              min_length=LENGTH,
-                             min_snr=SNR ):
+                             min_snr=SNR):
     """
     Extract CCS reads from an input_file
     """
     output_file = output_file or get_output_name( input_file, 'fastq' )
     collection = BasH5Collection( input_file )
-    output_fastq( collection, output_file, min_length, min_snr )
+    extract_ccs_fastq( collection, output_file, min_length, min_snr )
     return output_file
 
-def output_fastq( collection, output_file, min_length, min_snr ):
+def extract_ccs_fastq( collection, output_file, min_length, min_snr ):
     log.info('Extracting fastq CCS reads from input files')
+    log.debug('    min_length: %s' % min_length)
+    log.debug('    min_snr: %s' % min_snr)
     ccs_total = 0
     pass_total = 0
     with FastqWriter( output_file ) as writer:
         for movie in collection.movieNames:
-            log.info('Extracting fastq CCS reads from %s' % os.path.basename(reader.filename))
+            log.info('Extracting fastq CCS reads from %s' % os.path.basename(movie))
             ccs_count = 0
             pass_count = 0
-            for zmw in collection[movie].sequencingZmws:
+            for well in collection[movie].sequencingZmws:
+                zmw = collection[movie][well]
 
                 # Skip non-CCS ZMWs
                 if not zmw.ccsRead:
@@ -100,6 +103,7 @@ if __name__ == '__main__':
     import sys
 
     input_file = sys.argv[1]
+    min_snr = float(sys.argv[2])
 
-    logging.basicConfig( stream=sys.stdout, level=logging.INFO )
-    extract_ccs( input_file )
+    logging.basicConfig( stream=sys.stdout, level=logging.DEBUG )
+    extract_ccs( input_file, min_snr=min_snr )
