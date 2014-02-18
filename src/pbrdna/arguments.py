@@ -123,6 +123,9 @@ def parse_args():
     add('--debug', 
         action='store_true',
         help="Turn on DEBUG message logging")
+    add('--test_mode',
+        action='store_true',
+        help="Turn on current modifications being tested")
 
     class PrintVersionAction(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
