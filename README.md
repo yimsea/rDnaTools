@@ -20,9 +20,12 @@ that must available for the package to function
 * Python 2.7 (www.python.org)
 * pbcore (www.github.com/PacificBiosciences/pbcore)
 * pbdagcon (www.github.com/PacificBiosciences/pbdagcon)
-* Blasr (www.github.com/PacificBiosciences/blasr)
 * Mothur (www.mothur.org)
 
+Optionally, some secondary scripts in the rDnaTools package also 
+require other Pacific Biosciences tools
+* Blasr (www.github.com/PacificBiosciences/blasr)
+* SMRT Analysis (http://www.pacb.com/devnet/)
 
 ## rDnaPipeline ##
 
