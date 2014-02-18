@@ -361,7 +361,7 @@ class rDnaPipeline( object ):
         self.process_cleanup(output_file=outputFile)
         return outputFile
 
-    def cluster_sequences(self, distanceMatrix):
+    def cluster_sequences(self, distanceMatrix, nameFile):
         if self.clusteringMethod == 'nearest':
             outputSuffix = 'nn.list'
         elif self.clusteringMethod == 'average':
@@ -374,6 +374,7 @@ class rDnaPipeline( object ):
         if self.output_files_exist(output_file=outputFile):
             return outputFile
         mothurArgs = {'phylip':distanceMatrix,
+                      'name':nameFile,
                       'method':self.clusteringMethod}
         logFile = self.getProcessLogFile( 'cluster', True )
         self.factory.runJob( 'cluster', mothurArgs, logFile )
@@ -540,7 +541,7 @@ class rDnaPipeline( object ):
         # If enabled, calculate sequence distances and cluster
         if self.enable_clustering:
             distanceMatrix = self.calculate_distance_matrix( fileForClustering )
-            listFile = self.cluster_sequences( distanceMatrix )
+            listFile = self.cluster_sequences( distanceMatrix, nameFile )
         # If enabled, generate a consensus for each cluster from above
         if self.enable_consensus:
             clusterListFile = self.separate_cluster_sequences( listFile, fastqFile )
