@@ -114,40 +114,40 @@ class rDnaPipeline( object ):
                 outputFiles.append( outputFile )
             return outputFiles
 
-    def output_files_exist( self, outputFile=None, outputList=None ):
-        if outputFile:
-            if file_exists( outputFile ):
+    def output_files_exist(self, output_file=None, output_list=None):
+        if output_file:
+            if file_exists( output_file ):
                 log.info('Output files detected, skipping process...\n')
                 return True
             else:
                 log.info('Output files not found, running process...')
                 return False
-        elif outputList:
-            if all_files_exist( outputList ):
+        elif output_list:
+            if all_files_exist( output_list ):
                 log.info('Output files detected, skipping process...\n')
                 return True
             else:
                 log.info('Output files not found, running process...')
                 return False
 
-    def checkOutputFile( self, outputFile ):
-        if file_exists( outputFile ):
+    def check_output_file( self, outputFile ):
+        if os.path.exists( outputFile ):
             log.info('Expected output "%s" found' % outputFile)
         else:
             msg = 'Expected output "%s" not found!' % outputFile
-            log.info( msg )
+            log.error( msg )
             raise IOError( msg )
 
-    def process_cleanup(self, outputFile=None, outputList=None):
+    def process_cleanup(self, output_file=None, output_list=None):
         """
         Log if the process successfully created it's output, and raise an
         error message if not
         """
-        if outputFile:
-            self.checkOutputFile( outputFile )
-        elif outputList:
-            for outputFile in outputList:
-                self.checkOutputFile( outputFile )
+        if output_file:
+            self.check_output_file( output_file )
+        elif output_list:
+            for output_file in output_list:
+                self.check_output_file( output_file )
         log.info('All expected output files found - process successful!\n')
 
     def write_dummy_file(self, dummyFile):
@@ -159,7 +159,7 @@ class rDnaPipeline( object ):
         outputFile = self.process_setup( inputFile, 
                                          'extractCcsFromBasH5',
                                          suffix='fastq' )
-        if self.output_files_exist( outputFile=outputFile ):
+        if self.output_files_exist(output_file=outputFile):
             return outputFile
         elif file_has_ccs( inputFile ):
             extract_ccs(inputFile, outputFile, self.raw_data)
@@ -167,43 +167,43 @@ class rDnaPipeline( object ):
             msg = 'Raw data file has no CCS data!'
             log.error( msg )
             raise ValueError( msg )
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
 
     def filter_fastq(self, fastqFile):
         outputFile = self.process_setup( fastqFile, 
                                          'FilterQuality',
                                          suffix='filter.fastq' )
-        if self.output_files_exist( outputFile=outputFile ):
+        if self.output_files_exist(output_file=outputFile):
             return outputFile
         quality_filter( fastqFile, outputFile )
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
 
     def separate_fastq(self, fastqFile):
         outputList = self.process_setup( fastqFile, 
                                         'Fastq.Info', 
                                         suffixList=['fasta', 'qual'] )
-        if self.output_files_exist( outputList=outputList ):
+        if self.output_files_exist(output_list=outputList):
             return outputList
         mothurArgs = {'fastq':fastqFile, 'fasta':'T', 'qfile':'T'}
         logFile = self.getProcessLogFile('fastq.info', True)
         self.factory.runJob('fastq.info', mothurArgs, logFile)
-        self.process_cleanup( outputList=outputList )
+        self.process_cleanup(output_list=outputList)
         return outputList
 
     def align_sequences(self, fastaFile):
         outputFile = self.process_setup( fastaFile, 
                                         'Align.Seqs', 
                                         suffix='align' )
-        if self.output_files_exist( outputFile=outputFile ):
+        if self.output_files_exist(output_file=outputFile):
             return outputFile
         mothurArgs = {'fasta':fastaFile,
                       'reference':self.alignment_reference,
                       'flip':'t'}
         logFile = self.getProcessLogFile('align.seqs', True)
         self.factory.runJob('align.seqs', mothurArgs, logFile)
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
 
     def screen_sequences(self, alignFile, start=None, end=None, min_length=None):
@@ -214,7 +214,7 @@ class rDnaPipeline( object ):
         outputFile = self.process_setup( alignFile, 
                                          'Screen.Seqs', 
                                          suffix=outputExt )
-        if self.output_files_exist( outputFile=outputFile ):
+        if self.output_files_exist(output_file=outputFile):
             return outputFile
         mothurArgs = {'fasta':alignFile,
                       'start':start,
@@ -222,19 +222,19 @@ class rDnaPipeline( object ):
                       'minlength':min_length}
         logFile = self.getProcessLogFile('screen.seqs', True)
         self.factory.runJob('screen.seqs', mothurArgs, logFile)
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
 
     def summarize_sequences(self, fastaFile):
         outputFile = self.process_setup( fastaFile, 
                                         'Summary.Seqs', 
                                         suffix='summary' )
-        if self.output_files_exist( outputFile=outputFile ):
+        if self.output_files_exist(output_file=outputFile):
             return outputFile
         mothurArgs = {'fasta':fastaFile}
         logFile = self.getProcessLogFile('summary.seqs', True)
         self.factory.runJob('summary.seqs', mothurArgs, logFile)
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
 
     def parse_summary_file(self, summaryFile):
@@ -254,61 +254,62 @@ class rDnaPipeline( object ):
         outputFile = self.process_setup( alignFile, 
                                         'UCHIME', 
                                         suffix='uchime.accnos' )
-        if self.output_files_exist( outputFile=outputFile ):
+        if self.output_files_exist(output_file=outputFile):
             return outputFile
         mothurArgs = {'fasta':alignFile,
                       'reference':self.chimera_reference}
         logFile = self.getProcessLogFile('chimera.uchime', True)
         self.factory.runJob('chimera.uchime', mothurArgs, logFile)
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
 
     def remove_sequences(self, alignFile, idFile):
         outputFile = self.process_setup( alignFile, 
                                         'Remove.Seqs', 
                                         suffix='pick.align' )
-        if self.output_files_exist( outputFile=outputFile ):
+        if self.output_files_exist(output_file=outputFile):
             return outputFile
         mothurArgs = {'fasta':alignFile,
                       'accnos':idFile}
         logFile = self.getProcessLogFile('remove.seqs', True)
         self.factory.runJob('remove.seqs', mothurArgs, logFile)
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
   
-    def filter_sequences(self, alignFile):
+    def filter_sequences(self, alignFile, trump=None ):
         outputFile = self.process_setup( alignFile, 
                                         'Filter.Seqs', 
                                         suffix='filter.fasta' )
-        if self.output_files_exist( outputFile=outputFile ):
+        if self.output_files_exist(output_file=outputFile):
             return outputFile
-        mothurArgs = {'fasta':alignFile,
-                      'vertical':'T'}
+        mothurArgs = {'fasta': alignFile,
+                      'vertical': 'T',
+                      'trump': trump}
         logFile = self.getProcessLogFile( 'filter.seqs', True )
         self.factory.runJob( 'filter.seqs', mothurArgs, logFile )
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
 
     def add_quality_to_alignment(self, fastqFile, alignFile):
         outputFile = self.process_setup( alignFile, 
                                         'QualityAligner', 
                                         suffix='fastq' )
-        if self.output_files_exist( outputFile=output ):
-            return output
+        if self.output_files_exist(output_file=outputFile):
+            return outputFile
         aligner = QualityAligner( fastqFile, alignFile, outputFile )
         aligner.run()
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
 
     def mask_fastq_sequences(self, fastqFile):
         outputFile = self.process_setup( fastqFile, 
                                         'QualityMasker', 
                                         suffix='masked.fastq' )
-        if self.output_files_exist( outputFile=outputFile ):
+        if self.output_files_exist(output_file=outputFile):
             return outputFile
         masker = QualityMasker(fastqFile, outputFile, self.minQv)
         masker.run()
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
 
     def unique_sequences( self, alignFile ):
@@ -319,12 +320,12 @@ class rDnaPipeline( object ):
         outputList = self.process_setup( alignFile,
                                         'Unique.Seqs',
                                         suffixList=outputSuffixes )
-        if self.output_files_exist( outputList=outputList ):
+        if self.output_files_exist(output_list=outputList):
             return outputList
         mothurArgs = {'fasta':alignFile}
         logFile = self.getProcessLogFile('unique.seqs', True)
         self.factory.runJob('unique.seqs', mothurArgs, logFile)
-        self.process_cleanup( outputList=outputList )
+        self.process_cleanup(output_list=outputList)
         return outputList
 
     def precluster_sequences( self, alignFile, nameFile ):
@@ -335,21 +336,21 @@ class rDnaPipeline( object ):
         outputList = self.process_setup( alignFile,
                                         'Pre.Cluster',
                                         suffixList=outputSuffixes )
-        if self.output_files_exist( outputList=outputList ):
+        if self.output_files_exist(output_list=outputList):
             return outputList
         mothurArgs = { 'fasta':alignFile,
                        'name': nameFile,
                        'diffs':self.precluster_diffs }
         logFile = self.getProcessLogFile('pre.cluster', True)
         self.factory.runJob('pre.cluster', mothurArgs, logFile)
-        self.process_cleanup( outputList=outputList )
+        self.process_cleanup(output_list=outputList)
         return outputList
 
     def calculate_distance_matrix( self, alignFile ):
         outputFile = self.process_setup( alignFile, 
                                         'Dist.Seqs', 
                                         suffix='phylip.dist' )
-        if self.output_files_exist( outputFile=outputFile ):
+        if self.output_files_exist(output_file=outputFile):
             return outputFile
         mothurArgs = { 'fasta':alignFile,
                        'calc':'onegap',
@@ -357,7 +358,7 @@ class rDnaPipeline( object ):
                        'output':'lt' }
         logFile = self.getProcessLogFile('dist.seqs', True)
         self.factory.runJob('dist.seqs', mothurArgs, logFile)
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
 
     def cluster_sequences(self, distanceMatrix):
@@ -370,20 +371,20 @@ class rDnaPipeline( object ):
         outputFile = self.process_setup( distanceMatrix, 
                                         'Cluster', 
                                         suffix=outputSuffix )
-        if self.output_files_exist( outputFile=outputFile ):
+        if self.output_files_exist(output_file=outputFile):
             return outputFile
         mothurArgs = {'phylip':distanceMatrix,
                       'method':self.clusteringMethod}
         logFile = self.getProcessLogFile( 'cluster', True )
         self.factory.runJob( 'cluster', mothurArgs, logFile )
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
 
     def separate_cluster_sequences(self, listFile, sequenceFile):
         outputFile = self.process_setup( listFile, 
                                         'ClusterSeparator', 
                                         suffix='list.clusters')
-        if self.output_files_exist( outputFile=outputFile ):
+        if self.output_files_exist(output_file=outputFile):
             return outputFile
         separator = ClusterSeparator( listFile, 
                                       sequenceFile,
@@ -391,14 +392,14 @@ class rDnaPipeline( object ):
                                       self.distance, 
                                       self.min_cluster_size )
         separator()
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
 
     def generate_consensus_sequences(self, clusterListFile):
         outputFile = self.process_setup( clusterListFile, 
                                         'ClusterResequencer', 
                                         suffix='consensus')
-        if self.output_files_exist( outputFile=outputFile ):
+        if self.output_files_exist(output_file=outputFile):
             return outputFile
         consensusFiles = []
         with open( clusterListFile ) as handle:
@@ -414,14 +415,27 @@ class rDnaPipeline( object ):
         with open( outputFile, 'w' ) as handle:
             for filenamePair in consensusFiles:
                 handle.write('%s\t%s\n' % filenamePair)
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
+        return outputFile
+
+    def cleanup_uchime_output( self, screenedFile ):
+        outputFile = self.process_setup( screenedFile,
+                                         'UchimeCleanup',
+                                         suffix='uchime.cleanup' )
+        uchimePath = os.getcwd()
+        for filename in os.listdir( uchimePath ):
+            if filename.endswith('_formatted'):
+                file_path = os.path.join( uchimePath, filename )
+                os.remove( file_path )
+        self.write_dummy_file( outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
 
     def cleanup_consensus_folder( self, consensusFile ):
         outputFile = self.process_setup( consensusFile, 
                                         'ConsensusCleanup', 
                                         suffix='consensus.cleanup' )
-        if self.output_files_exist( outputFile=outputFile ):
+        if self.output_files_exist(output_file=outputFile):
             return outputFile
         reseqPath = os.path.join( os.getcwd(), 'reseq' )
         for filename in os.listdir( reseqPath ):
@@ -433,14 +447,14 @@ class rDnaPipeline( object ):
             elif filePath.endswith('_input.fa.aln_unsorted'):
                 os.remove( filePath )
         self.write_dummy_file( outputFile )
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
 
     def select_final_sequences( self, consensusFile ):
         outputFile = self.process_setup( consensusFile, 
                                         'SequenceSelector', 
                                         suffix='consensus.selected' )
-        if self.output_files_exist( outputFile=outputFile ):
+        if self.output_files_exist(output_file=outputFile):
             return outputFile
         selectedFiles = []
         with open( consensusFile ) as handle:
@@ -455,21 +469,21 @@ class rDnaPipeline( object ):
         with open( outputFile, 'w' ) as handle:
             for filename in selectedFiles:
                 handle.write(filename + '\n')
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
 
     def output_final_sequences( self, finalSequenceList ):
         outputFile = self.process_setup( finalSequenceList, 
                                         'SequenceWriter',
                                         suffix='fasta' )
-        if self.output_files_exist( outputFile=outputFile ):
+        if self.output_files_exist(output_file=outputFile):
             return outputFile
         with FastaWriter( outputFile ) as writer:
             with open( finalSequenceList ) as handle:
                 for line in handle:
                     sequenceFile = line.strip()
                     copy_fasta_sequences( sequenceFile, writer )
-        self.process_cleanup( outputFile=outputFile )
+        self.process_cleanup(output_file=outputFile)
         return outputFile
 
     def run(self):
@@ -480,22 +494,34 @@ class rDnaPipeline( object ):
         elif self.data_type == 'fasta':
             fastqFile = None
             fastaFile = self.sequenceFile
+
         # If we have a Fastq, filter low-quality reads and convert to FASTA
         if fastqFile:
             filteredFastq = self.filter_fastq( fastqFile )
             fastaFile, qualFile = self.separate_fastq( filteredFastq )
+
         # Align the Fasta sequences and remove partial reads
         alignedFile = self.align_sequences( fastaFile )
         summaryFile = self.summarize_sequences( alignedFile )
         maxStart, minEnd = self.parse_summary_file( summaryFile )
-        screenedFile = self.screen_sequences(alignedFile, 
-                                            start=maxStart,
-                                            end=minEnd)
+        screenedFile = self.screen_sequences(alignedFile,
+                                             start=maxStart,
+                                             end=minEnd)
+
         # Identify and remove chimeric reads
-        chimeraIds = self.find_chimeras( screenedFile )
-        noChimeraFile = self.remove_sequences( screenedFile, chimeraIds )
+        chimera_ids = self.find_chimeras( screenedFile )
+        self.cleanup_uchime_output( screenedFile )
+        if file_exists( chimera_ids ):
+            no_chimera_file = self.remove_sequences( screenedFile, chimera_ids )
+        else:
+            no_chimera_file = screenedFile
+
         # Filter out un-used columns to speed up re-alignment and clustering
-        filteredFile = self.filter_sequences( noChimeraFile )
+        if self.test_mode:
+            filteredFile = self.filter_sequences( no_chimera_file, trump='.' )
+        else:
+            filteredFile = self.filter_sequences( no_chimera_file )
+
         # If masking is enabled, create an aligned FASTQ, mask the 
         # low-quality bases and remove over-masked reads
         if self.enable_masking:
