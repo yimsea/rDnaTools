@@ -16,7 +16,7 @@ NUMPROC_COMMANDS = frozenset(['align.seqs', 'chimera.uchime', 'screen.seqs',
 
 VALID_PARAMS = frozenset(['fasta', 'fastq', 'qfile', 'reference', 'name',
                           'flip', 'start', 'end', 'minlength', 'processors',
-                          'vertical', 'calc', 'output', 'phylip', 'method',
+                          'vertical', 'trump', 'calc', 'output', 'phylip', 'method',
                           'accnos', 'countends', 'qaverage', 'diffs', 'name'])
 
 class MothurCommand(object):
