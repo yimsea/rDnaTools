@@ -1,7 +1,7 @@
-import os, argparse
+import argparse, logging
 
 from . import __VERSION__
-from utils import validate_int, validate_float
+from utils import validate_int, validate_float, validate_file
 
 NPROC = 1
 MIN_DIST = 0.001
@@ -19,6 +19,8 @@ CLUSTER_METHODS = ('nearest', 'average', 'furthest')
 DEFAULT_METHOD = 'average'
 
 args = argparse.Namespace()
+
+log = logging.getLogger()
 
 def parse_args():
     """
@@ -136,7 +138,20 @@ def parse_args():
         nargs=0,
         action=PrintVersionAction)
 
+    print args
     parser.parse_args( namespace=args )
+    print args
+
+    # Validate any input files
+    if validate_file( args.alignment_reference ) is None:
+        msg = 'No alignment reference specified and default 16S Alignment reference not detected!'
+        log.error( msg )
+        raise ValueError( msg )
+
+    if validate_file( args.chimera_reference ) is None:
+        msg = 'Default Chimera Reference not detected in PATH, falling back to Alignment Reference'
+        log.warn( msg )
+        args.chimera_reference = args.alignment_reference
 
     # Validate numerical parameters
     validate_int( 'NumProc', args.nproc, minimum=0 )

@@ -263,6 +263,19 @@ class rDnaPipeline( object ):
         self.process_cleanup(output_file=outputFile)
         return outputFile
 
+    def find_chimeras_denovo(self, alignFile, nameFile):
+        outputFile = self.process_setup( alignFile,
+                                        'UCHIME',
+                                        suffix='uchime.accnos' )
+        if self.output_files_exist(output_file=outputFile):
+            return outputFile
+        mothurArgs = {'fasta':alignFile,
+                      'name':nameFile}
+        logFile = self.getProcessLogFile('chimera.uchime', True)
+        self.factory.runJob('chimera.uchime', mothurArgs, logFile)
+        self.process_cleanup(output_file=outputFile)
+        return outputFile
+
     def remove_sequences(self, alignFile, idFile):
         outputFile = self.process_setup( alignFile, 
                                         'Remove.Seqs', 
@@ -508,20 +521,8 @@ class rDnaPipeline( object ):
         screenedFile = self.screen_sequences(alignedFile,
                                              start=maxStart,
                                              end=minEnd)
-
-        # Identify and remove chimeric reads
-        chimera_ids = self.find_chimeras( screenedFile )
-        self.cleanup_uchime_output( screenedFile )
-        if file_exists( chimera_ids ):
-            no_chimera_file = self.remove_sequences( screenedFile, chimera_ids )
-        else:
-            no_chimera_file = screenedFile
-
-        # Filter out un-used columns to speed up re-alignment and clustering
-        if self.test_mode:
-            filteredFile = self.filter_sequences( no_chimera_file, trump='.' )
-        else:
-            filteredFile = self.filter_sequences( no_chimera_file )
+        #filteredFile = self.filter_sequences( screenedFile, trump='.' )
+        filteredFile = self.filter_sequences( screenedFile )
 
         # If masking is enabled, create an aligned FASTQ, mask the 
         # low-quality bases and remove over-masked reads
@@ -529,19 +530,27 @@ class rDnaPipeline( object ):
             alignedFastqFile = self.add_quality_to_alignment( fastqFile, filteredFile )
             maskedFastq = self.mask_fastq_sequences( alignedFastqFile )
             maskedFasta = self.convert_fastq_to_fasta( maskedFastq )
-            screenedFasta = self.screen_sequences( maskedFasta,
+            screenedFile = self.screen_sequences( maskedFasta,
                                                   min_length=self.min_length)
-            fileForClustering = screenedFasta
         # Otherwise if masking is disabled, we'll use unique-ify and 
         #    pre-cluster our sequences
         else:
             uniqueFile, nameFile = self.unique_sequences( filteredFile )
-            preclusteredFile, nameFile = self.precluster_sequences( uniqueFile, nameFile )
-            fileForClustering = preclusteredFile
+            screenedFile, nameFile = self.precluster_sequences( uniqueFile, nameFile )
+
+        # Identify and remove chimeric reads
+        chimera_ids = self.find_chimeras_denovo( screenedFile, nameFile )
+        self.cleanup_uchime_output( screenedFile )
+        if file_exists( chimera_ids ):
+            fileForClustering = self.remove_sequences( screenedFile, chimera_ids )
+        else:
+            fileForClustering = screenedFile
+
         # If enabled, calculate sequence distances and cluster
         if self.enable_clustering:
             distanceMatrix = self.calculate_distance_matrix( fileForClustering )
             listFile = self.cluster_sequences( distanceMatrix, nameFile )
+
         # If enabled, generate a consensus for each cluster from above
         if self.enable_consensus:
             clusterListFile = self.separate_cluster_sequences( listFile, fastqFile )

@@ -116,6 +116,12 @@ def validate_output( filename ):
         return filename
     return os.path.abspath( filename )
 
+def validate_file( filename ):
+    if file_exists( filename ):
+        return filename
+    else:
+        return which( filename )
+
 def validate_executable( executable ):
     """
     Return the path to an executable if it is valid, otherwise error
