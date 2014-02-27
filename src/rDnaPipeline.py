@@ -36,10 +36,7 @@ class rDnaPipeline( object ):
         self.__dict__.update( vars(args) )
         self.validate_settings()
         self.initialize_output()
-        if self.debug:
-            initialize_logger( self.log_file, logging.DEBUG )
-        else:
-            initialize_logger( self.log_file, logging.INFO )
+        initialize_logger( log, log_file=self.log_file, debug=self.debug )
 
     def validate_settings(self):
         # Validate the input file
