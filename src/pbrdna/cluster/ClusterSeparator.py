@@ -123,7 +123,7 @@ class ClusterSeparator(object):
         try:
             distance = 'unique' if distance == 'unique' else float(distance)
         except:
-            raise ValueError('"%s" is not a valid distance!' % parts[0])
+            raise ValueError('"%s" is not a valid distance!' % distance)
         return distance
 
     ####################
@@ -143,6 +143,8 @@ class ClusterSeparator(object):
         distances = []
         with open( self.listFile, 'r' ) as handle:
             for line in handle:
+                if line.startswith('label'):
+                    continue
                 parts = line.split()
                 distance = self.convertDistance( parts[0] )
                 distances.append( distance )
@@ -150,8 +152,6 @@ class ClusterSeparator(object):
 
     def selectDistance(self, distances):
         # If our selected distance is present, simply return it
-        print self.distance
-        print distances
         if self.distance in distances:
             return self.distance
         # Otherwise find the largest clustering distance smaller than 
@@ -165,6 +165,8 @@ class ClusterSeparator(object):
     def parseClusters( self, targetDist ):
         with open( self.listFile, 'r' ) as handle:
             for line in handle:
+                if line.startswith('label'):
+                    continue
                 # Skip lines until we find the target distance
                 parts = line.split()
                 currDist = self.convertDistance( parts[0] )
