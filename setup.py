@@ -17,7 +17,10 @@ setup(
     license=open('LICENSES.txt').read(),
     packages = find_packages('src'),
     package_dir = {'':'src'},
-    scripts=['src/rDnaPipeline.py'],
+    scripts=[
+        'src/rDnaPipeline.py',
+        'src/rDnaPipeline2.py'
+    ],
     zip_safe = False,
     install_requires=[
         'h5py >= 2.0.1',
