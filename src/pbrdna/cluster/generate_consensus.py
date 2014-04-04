@@ -4,6 +4,7 @@ __author__ = 'Brett Bowman'
 __email__ = 'bbowman@pacificbiosciences.com'
 
 from pbrdna.resequence.DagConTools import DagConRunner
+from pbrdna.fasta.utils import fasta_count
 
 def generate_consensus_files( cluster_list, consensus_tool, output_file ):
     consensus_files = []
@@ -11,6 +12,8 @@ def generate_consensus_files( cluster_list, consensus_tool, output_file ):
         for line in handle:
             sequence_file, reference_file, count = line.strip().split()
             if reference_file.endswith('None'):
+                consensus_files.append( (sequence_file, 'None') )
+            if fasta_count( sequence_file ) == 1:
                 consensus_files.append( (sequence_file, 'None') )
             else:
                 consensus = consensus_tool( sequence_file, reference_file )

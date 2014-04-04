@@ -17,6 +17,7 @@ from pbrdna.fastq.QualityMasker import QualityMasker
 from pbrdna.mothur.MothurTools import MothurRunner
 from pbrdna.cluster.ClusterSeparator import ClusterSeparator
 from pbrdna.cluster.generate_consensus import generate_consensus_files
+from pbrdna.cluster.select_consensus import select_consensus_files
 from pbrdna.resequence.DagConTools import DagConRunner
 from pbrdna.utils import (validate_executable,
                           create_directory,
@@ -442,19 +443,7 @@ class rDnaPipeline( object ):
                                         suffix='consensus.selected' )
         if self.output_files_exist(output_file=outputFile):
             return outputFile
-        selectedFiles = []
-        with open( consensusFile ) as handle:
-            for line in handle:
-                referenceFile, consensusFile = line.strip().split()
-                if consensusFile.endswith('None'):
-                    pass
-                elif fasta_count( consensusFile ) == 1:
-                    selectedFiles.append( consensusFile )
-                else:
-                    selectedFiles.append( referenceFile )
-        with open( outputFile, 'w' ) as handle:
-            for filename in selectedFiles:
-                handle.write(filename + '\n')
+        select_consensus_files( consensus_file, output_file )
         self.process_cleanup(output_file=outputFile)
         return outputFile
 
