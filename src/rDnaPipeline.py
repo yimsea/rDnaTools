@@ -24,7 +24,7 @@ from pbrdna.utils import (validate_executable,
                           file_exists,
                           all_files_exist)
 
-log = logging.getLogger(__name__)
+log = logging.getLogger()
 
 class rDnaPipeline( object ):
     """
@@ -173,7 +173,7 @@ class rDnaPipeline( object ):
                                          suffix='filter.fastq' )
         if self.output_files_exist(output_file=outputFile):
             return outputFile
-        quality_filter( fastqFile, outputFile )
+        quality_filter( fastqFile, outputFile, min_accuracy=self.min_accuracy )
         self.process_cleanup(output_file=outputFile)
         return outputFile
 

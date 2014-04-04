@@ -30,9 +30,7 @@
 #################################################################################$$
 
 import os
-import sys
 import logging
-import subprocess
 
 from pbcore.io.FastqIO import FastqRecord, FastqReader, FastqWriter
 from pbcore.io.FastaIO import FastaRecord, FastaWriter  
@@ -42,6 +40,8 @@ from pbrdna.utils import get_zmw, create_directory, validate_input, validate_flo
 DEFAULT_DIST = 0.03
 MIN_FULL_LENGTH = 1400
 MIN_CLUSTER_SIZE = 3
+
+log = logging.getLogger()
 
 class ClusterSeparator(object):
     """
@@ -77,10 +77,6 @@ class ClusterSeparator(object):
         parser.add_argument('-m', '--minRefLength', type=int,
                             default=MIN_FULL_LENGTH, metavar='INT',
                             help="Minimum length to allow for reference sequences")
-        parser.add_argument('--outputFastq', action='store_true',
-                            help="Output FASTQ files for each cluster")
-        parser.add_argument('--outputReference', action='store_true',
-                            help="Output reference sequences for each cluster")
         parser.add_argument('-o', '--outputDir', default='reseq',
                             help="Specify a directory for output files")
         parser.add_argument('-s', '--summary', dest='output', default=None,
@@ -96,8 +92,6 @@ class ClusterSeparator(object):
         self.distance = DEFAULT_DIST if distance is None else distance
         self.min_cluster_size = MIN_CLUSTER_SIZE if distance is None else min_cluster_size
         self.outputDir = 'reseq'
-        self.outputFastq = False
-        self.outputReference = True
         self.minRefLength = MIN_FULL_LENGTH
 
     def validate_settings( self ):
@@ -198,16 +192,6 @@ class ClusterSeparator(object):
             reads.append( ccsRead )
         return reads
 
-    def outputClusterFastq(self, reads, count):
-        fastqFile = 'cluster%s.fastq' % count
-        if os.path.exists( fastqFile ):
-            return fastqFile
-        # Rename the "Reference" sequence to the cluster
-        with FastqWriter( fastqFile ) as handle:
-            for fastqRecord in reads:
-                handle.writeRecord( fastqRecord )
-        return fastqFile
-
     def outputClusterFasta( self, reads, count ):
         fastaFile = 'cluster%s.fasta' % count
         if os.path.exists( fastaFile ):
@@ -269,26 +253,29 @@ class ClusterSeparator(object):
     def __call__( self ):
         self.initializeOutputFolder()
         self.parseSequenceData()
+
         # Select the appropriate distance, and parse the matching clusters
         distances = self.parseDistances()
         distance = self.selectDistance( distances )
+        log.info("Distance: %s" % distance)
         clusters = self.parseClusters( distance )
+        log.info("Clusters found: %s" % len(clusters))
+
         # Trim the cluster neams and iterate, outputing each subset
         trimmedClusters = self.trimClusterNames( clusters )
         clusterFiles = []
         for count, cluster in enumerate( trimmedClusters ):
             count = str(count+1).zfill(4)
-            print "Analyzing cluster #%s now..." % (count)
+            log.info("Analyzing cluster #%s now..." % count)
             reads = self.getClusterReads( cluster )
             clusterFile = self.outputClusterFasta( reads, count )
-            if self.outputFastq:
-                self.outputClusterFastq( reads, count )
-            if len(reads) >= self.min_cluster_size and self.outputReference:
+            if len(reads) >= self.min_cluster_size:
                 reference = self.pickReference( reads )
                 referenceFile = self.outputReferenceFasta( reference, count )
                 clusterFiles.append( (clusterFile, referenceFile, len(reads)) )
             else:
                 clusterFiles.append( (clusterFile, 'None', len(reads)) )
+
         # Return to the origin directory and output the results summary
         os.chdir( self.origin )
         if self.output:

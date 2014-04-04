@@ -7,7 +7,7 @@ from pbrdna.arguments import args, MIN_ACCURACY
 
 ACCURACY = getattr(args, 'min_accuracy', MIN_ACCURACY)
 
-log = logging.getLogger(__name__)
+log = logging.getLogger()
 
 def quality_filter(input_fastq, output_fastq, min_accuracy=ACCURACY):
     """
@@ -22,7 +22,7 @@ def quality_filter(input_fastq, output_fastq, min_accuracy=ACCURACY):
             if predicted_accuracy(record) >= min_accuracy:
                 pass_count += 1
                 writer.writeRecord( record )
-    percentage = round(100.0*pass_count/seq_count)
+    percentage = round(100.0*pass_count/seq_count, 4)
     log.info("{0} sequences of {1} ({2}%) passed filtering".format(pass_count,
                                                                    seq_count,
                                                                    percentage))
