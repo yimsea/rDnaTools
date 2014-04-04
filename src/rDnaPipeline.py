@@ -16,6 +16,7 @@ from pbrdna.fastq.QualityAligner import QualityAligner
 from pbrdna.fastq.QualityMasker import QualityMasker
 from pbrdna.mothur.MothurTools import MothurRunner
 from pbrdna.cluster.ClusterSeparator import ClusterSeparator
+from pbrdna.cluster.generate_consensus import generate_consensus_files
 from pbrdna.resequence.DagConTools import DagConRunner
 from pbrdna.utils import (validate_executable,
                           create_directory,
@@ -393,28 +394,15 @@ class rDnaPipeline( object ):
         self.process_cleanup(output_file=outputFile)
         return outputFile
 
-    def generate_consensus_sequences(self, clusterListFile):
-        outputFile = self.process_setup( clusterListFile, 
+    def generate_consensus_sequences(self, cluster_list_file):
+        output_file = self.process_setup( cluster_list_file,
                                         'ClusterResequencer', 
                                         suffix='consensus')
-        if self.output_files_exist(output_file=outputFile):
-            return outputFile
-        consensusFiles = []
-        with open( clusterListFile ) as handle:
-            for line in handle:
-                sequenceFile, referenceFile, count = line.strip().split()
-                if referenceFile.endswith('None'):
-                    consensusFiles.append( (sequenceFile, 'None') )
-                else:
-                    root_name = os.path.basename( sequenceFile )
-                    consensus = self.consensusTool( sequenceFile, 
-                                                    referenceFile )
-                    consensusFiles.append( (referenceFile, consensus) )
-        with open( outputFile, 'w' ) as handle:
-            for filenamePair in consensusFiles:
-                handle.write('%s\t%s\n' % filenamePair)
-        self.process_cleanup(output_file=outputFile)
-        return outputFile
+        if self.output_files_exist(output_file=output_file):
+            return output_file
+        generate_consensus_files( cluster_list_file, self.consensusTool, output_file )
+        self.process_cleanup(output_file=output_file)
+        return output_file
 
     def cleanup_uchime_output( self, screenedFile ):
         outputFile = self.process_setup( screenedFile,
