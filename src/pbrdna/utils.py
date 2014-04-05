@@ -11,6 +11,11 @@ BlasrM1 = namedtuple('BlasrM1', ['qname', 'tname', 'qstrand', 'tstrand',
 
 log = logging.getLogger(__name__)
 
+def write_dummy_file( filename ):
+    with open(filename, 'w') as handle:
+        handle.write('DONE')
+    return filename
+
 def is_fasta( filename ):
     if filename.endswith('.fa') or \
        filename.endswith('.fna') or \

@@ -11,11 +11,15 @@ def generate_consensus_files( cluster_list, consensus_tool, output_file ):
     with open( cluster_list ) as handle:
         for line in handle:
             sequence_file, reference_file, count = line.strip().split()
+            print sequence_file, reference_file
             if reference_file.endswith('None'):
+                print 'A'
                 consensus_files.append( (sequence_file, 'None') )
-            if fasta_count( sequence_file ) == 1:
-                consensus_files.append( (sequence_file, 'None') )
+            elif fasta_count( sequence_file ) == 1:
+                print 'B'
+                consensus_files.append( (sequence_file, reference_file) )
             else:
+                print 'C'
                 consensus = consensus_tool( sequence_file, reference_file )
                 consensus_files.append( (reference_file, consensus) )
     write_consensus_files( consensus_files, output_file )

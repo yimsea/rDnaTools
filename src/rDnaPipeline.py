@@ -18,13 +18,15 @@ from pbrdna.mothur.MothurTools import MothurRunner
 from pbrdna.cluster.ClusterSeparator import ClusterSeparator
 from pbrdna.cluster.generate_consensus import generate_consensus_files
 from pbrdna.cluster.select_consensus import select_consensus_files
+from pbrdna.cluster.clean_consensus import clean_consensus_outputs
 from pbrdna.resequence.DagConTools import DagConRunner
 from pbrdna.utils import (validate_executable,
                           create_directory,
                           split_root_from_ext,
                           get_output_name,
                           file_exists,
-                          all_files_exist)
+                          all_files_exist,
+                          write_dummy_file)
 
 log = logging.getLogger()
 
@@ -148,11 +150,6 @@ class rDnaPipeline( object ):
             for output_file in output_list:
                 self.check_output_file( output_file )
         log.info('All expected output files found - process successful!\n')
-
-    def write_dummy_file(self, dummyFile):
-        with open(dummyFile, 'w') as handle:
-            handle.write('DONE')
-        return dummyFile
 
     def extract_raw_ccs(self, inputFile):
         outputFile = self.process_setup( inputFile, 
@@ -414,7 +411,7 @@ class rDnaPipeline( object ):
             if filename.endswith('_formatted'):
                 file_path = os.path.join( uchimePath, filename )
                 os.remove( file_path )
-        self.write_dummy_file( outputFile )
+        write_dummy_file( outputFile )
         self.process_cleanup(output_file=outputFile)
         return outputFile
 
@@ -425,15 +422,7 @@ class rDnaPipeline( object ):
         if self.output_files_exist(output_file=outputFile):
             return outputFile
         reseqPath = os.path.join( os.getcwd(), 'reseq' )
-        for filename in os.listdir( reseqPath ):
-            filePath = os.path.join( reseqPath, filename )
-            if filePath.endswith('_input.fa'):
-                os.remove( filePath )
-            elif filePath.endswith('_input.fa.aln'):
-                os.remove( filePath )
-            elif filePath.endswith('_input.fa.aln_unsorted'):
-                os.remove( filePath )
-        self.write_dummy_file( outputFile )
+        clean_consensus_outputs( reseqPath, outputFile )
         self.process_cleanup(output_file=outputFile)
         return outputFile
 

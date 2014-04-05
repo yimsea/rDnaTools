@@ -270,8 +270,11 @@ class ClusterSeparator(object):
             reads = self.getClusterReads( cluster )
             clusterFile = self.outputClusterFasta( reads, count )
             if len(reads) >= self.min_cluster_size:
-                reference = self.pickReference( reads )
-                referenceFile = self.outputReferenceFasta( reference, count )
+                if len(reads) == 1:
+                    referenceFile = clusterFile
+                else:
+                    reference = self.pickReference( reads )
+                    referenceFile = self.outputReferenceFasta( reference, count )
                 clusterFiles.append( (clusterFile, referenceFile, len(reads)) )
             else:
                 clusterFiles.append( (clusterFile, 'None', len(reads)) )
