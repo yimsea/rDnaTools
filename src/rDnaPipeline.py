@@ -3,14 +3,12 @@
 import os
 import logging
 
-from pbcore.io.FastaIO import FastaWriter
-
 from pbrdna.log import initialize_logger
 from pbrdna.arguments import args, parse_args
 from pbrdna.io.has_ccs import file_has_ccs
 from pbrdna.io.extract_ccs import extract_ccs
 from pbrdna.io.MothurIO import SummaryReader
-from pbrdna.fasta.utils import fasta_count, copy_fasta_sequences
+from pbrdna.fasta.utils import copy_fasta_list
 from pbrdna.fastq.quality_filter import quality_filter
 from pbrdna.fastq.QualityAligner import QualityAligner
 from pbrdna.fastq.QualityMasker import QualityMasker
@@ -442,11 +440,7 @@ class rDnaPipeline( object ):
                                         suffix='fasta' )
         if self.output_files_exist(output_file=outputFile):
             return outputFile
-        with FastaWriter( outputFile ) as writer:
-            with open( finalSequenceList ) as handle:
-                for line in handle:
-                    sequenceFile = line.strip()
-                    copy_fasta_sequences( sequenceFile, writer )
+        copy_fasta_list( finalSequenceList, outputFile )
         self.process_cleanup(output_file=outputFile)
         return outputFile
 
