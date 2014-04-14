@@ -7,8 +7,11 @@ def fasta_count( fasta_file ):
             if len(record.sequence) > 0:
                 count += 1
     except:
-        pass
+        return 0
     return count
+
+def fasta_names( fasta_file ):
+    return set([f.name.strip() for f in FastaReader( fasta_file )])
 
 def copy_fasta_sequences( fasta_file, fasta_writer ):
     for fasta_record in FastaReader( fasta_file ):

@@ -25,8 +25,10 @@ def select_combined_sequences( consensus_file, output_file ):
             sequence_file, reference_file, consensus_file = line.strip().split()
             if consensus_file.endswith('None'):
                 selected_files.append( sequence_file )
-            elif:
+            elif fasta_count( consensus_file ) >= 1:
                 selected_files.append( consensus_file )
+            else:
+                selected_files.append( sequence_file )
     output_selected_consensus( output_file, selected_files )
 
 def output_selected_consensus( output_file, selected_files ):
