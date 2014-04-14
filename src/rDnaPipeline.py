@@ -425,12 +425,12 @@ class rDnaPipeline( object ):
         return outputFile
 
     def select_final_sequences( self, consensusFile ):
-        outputFile = self.process_setup( consensusFile, 
+        outputFile = self.process_setup( consensusFile,
                                         'SequenceSelector', 
                                         suffix='consensus.selected' )
         if self.output_files_exist(output_file=outputFile):
             return outputFile
-        select_consensus_files( consensus_file, output_file )
+        select_consensus_files( consensusFile, outputFile )
         self.process_cleanup(output_file=outputFile)
         return outputFile
 
