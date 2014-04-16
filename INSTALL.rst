@@ -28,16 +28,19 @@ First we need to create a directory to store the virtual environment, and
 export the path to a variable we can call later.  I prefer to keep my 
 environments in a separate folder, i.e. ~/environments/RDNA_ENV, but
 any clean directory with write-access should work::
+
     $ mkdir /some/path/to/your/RDNA_ENV
     $ export RDNA_HOME=/some/path/to/your/RDNA_ENV
 
 Now we can create a clean Virtual Environment in the new directory, making
 sure that we specify Python 2.7, and move into the directory::
+
     $ virtualenv -p /usr/bin/python2.7 $RDNA_HOME
     $ cd $RDNA_HOME
 
 First we need to activate the new environment, so that when we install 
 prerequisites they are applied only to the new Virtual Environment::
+
     $ source bin/activate
 
 Installing Mothur
