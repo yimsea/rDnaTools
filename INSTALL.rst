@@ -3,9 +3,9 @@ Installing rDnaTools and Dependencies
 
 :Authors: Brett Bowman
 
-:Version: 0.1
+:Version: 0.1.3
 
-:Date: March 25th, 2013
+:Date: April 16th, 2014
 
 
 Prerequisites:
