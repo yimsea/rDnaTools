@@ -111,14 +111,14 @@ and rDnaTools::
     $ pip install git+https://github.com/PacificBiosciences/pbcore.git
     $ pip install git+https://github.com/PacificBiosciences/rDnaTools.git
 
-If you do a ``pip freeze`` at this junction to inspect your installed libraries,
-this is what you should see::
+You can do a ``pip freeze`` at this junction to inspect your installed libraries,
+and check the versions of the required libraries.  The following are the minimum
+required versions for the required libraries::
 
     $ pip freeze
-    h5py==2.0.1
-    numpy==1.6.2
-    pbcore==0.6.0
-    wsgiref=0.1.2
+    h5py    >= 2.0.1
+    numpy   >= 1.6.0
+    pbcore  >= 0.8.0
 
 Install Other rDnaTools Prerequisites
 -------------------------------------
