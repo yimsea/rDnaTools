@@ -97,7 +97,7 @@ local python environment::
     $ cd bin/
     $ wget http://h5py.googlecode.com/files/h5py-2.0.1.tar.gz
     $ tar zxvf h5py-2.0.1.tar.gz
-    $ cd zxvf h5py-2.0.1
+    $ cd h5py-2.0.1
     $ python setup.py build --hdf5=$RDNA_HOME
     $ python setup.py install
     $ cd $RDNA_HOME
