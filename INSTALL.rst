@@ -35,11 +35,15 @@ any clean directory with write-access should work::
 Now we can create a clean Virtual Environment in the new directory, making
 sure that we specify Python 2.7, and move into the directory::
 
-    $ virtualenv -p /usr/bin/python2.7 $RDNA_HOME
+    $ virtualenv --no-site-packages -p /usr/bin/python2.7 $RDNA_HOME
     $ cd $RDNA_HOME
 
-First we need to activate the new environment, so that when we install
-prerequisites they are applied only to the new Virtual Environment::
+If using virtualenv v1.7 or greater, you may leave out the --no-site-packages
+flag as that is the default behavior.  For all older versions of virtualenv
+it strongly recommended to minimize problems later on.
+
+Finally, before installing any Python packages, we first we need to activate
+the new environment, so that they are applied only to the new Virtual Environment::
 
     $ source bin/activate
 
