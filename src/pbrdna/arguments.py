@@ -6,6 +6,7 @@ from utils import validate_int, validate_float, validate_file
 NPROC = 1
 MIN_DIST = 0.001
 DIST = 0.03
+STEP = 0.01
 MAX_DIST = 0.5
 MIN_ACCURACY = 0.99
 MIN_QV = 15
@@ -56,6 +57,11 @@ def parse_args():
         metavar='FLOAT', 
         default=DIST,
         help='Distance at which to cluster sequences (%s)' % DIST)
+    add('-t', '--step',
+        type=float,
+        metavar='FLOAT',
+        default=STEP,
+        help="Step-size to use when clustering iteratively")
     add('-n', '--num_processes', 
         type=int,
         metavar='INT',
@@ -101,21 +107,14 @@ def parse_args():
         metavar='REF',
         default='silva.gold.align',
         help="Reference MSA for Chimera detection")
-    add('--enable_masking', 
-        action='store_true',
-        help="Turn off the low-quality Masking step")
     add('--sub_cluster',
         action="store_true",
         help="Subcluster each OTU to separate individual rDNA alleles")
-    add('--disable_clustering', 
+    add('--disable_iteration',
         action='store_false',
-        dest='enable_clustering',
-        help="Turn off the Clustering and Resequencing steps")
-    add('--disable_consensus', 
-        action='store_false',
-        dest='enable_consensus',
-        help="Turn off the Consensus step")
-    add('--blasr', 
+        dest='enable_iteration',
+        help="Turn off the iterative Clustering and Resequencing steps")
+    add('--blasr',
         metavar='BLASR_PATH', 
         help="Specify the path to the Blasr executable")
     add('--mothur', 
@@ -138,9 +137,7 @@ def parse_args():
         nargs=0,
         action=PrintVersionAction)
 
-    print args
     parser.parse_args( namespace=args )
-    print args
 
     # Validate any input files
     if validate_file( args.alignment_reference ) is None:
