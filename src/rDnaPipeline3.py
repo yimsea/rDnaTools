@@ -2,6 +2,7 @@
 
 import os
 import logging
+import shutil
 
 from pbrdna.log import initialize_logger
 from pbrdna.arguments import args, parse_args
@@ -347,11 +348,10 @@ class rDnaPipeline( object ):
         self.process_cleanup(output_list=outputList)
         return outputList
 
-    def calculate_distance_matrix( self, alignFile, distance ):
-        suffix = '%s.phylip.dist' % distance
+    def calculate_distance_matrix( self, alignFile ):
         outputFile = self.process_setup( alignFile,
                                         'Dist.Seqs', 
-                                        suffix=suffix )
+                                        suffix='phylip.dist')
         if self.output_files_exist(output_file=outputFile):
             return outputFile
         mothurArgs = { 'fasta':alignFile,
@@ -363,14 +363,14 @@ class rDnaPipeline( object ):
         self.process_cleanup(output_file=outputFile)
         return outputFile
 
-    def cluster_sequences(self, distanceMatrix, nameFile, distance):
+    def cluster_sequences(self, distanceMatrix, nameFile ):
         if self.clusteringMethod == 'nearest':
-            outputSuffix = '%s.nn.list' % distance
+            outputSuffix = 'nn.list'
         elif self.clusteringMethod == 'average':
-            outputSuffix = '%s.an.list' % distance
+            outputSuffix = 'an.list'
         elif self.clusteringMethod == 'furthest':
-            outputSuffix = '%s.fn.list' % distance
-        outputFile = self.process_setup( distanceMatrix, 
+            outputSuffix = 'fn.list'
+        outputFile = self.process_setup( distanceMatrix,
                                         'Cluster', 
                                         suffix=outputSuffix )
         if self.output_files_exist(output_file=outputFile):
@@ -384,15 +384,16 @@ class rDnaPipeline( object ):
         return outputFile
 
     def separate_cluster_sequences(self, listFile, sequenceFile, distance, min_cluster_size):
-        suffix = '%s.clusters' % distance
-        outputFile = self.process_setup( listFile, 
+        outputFile = self.process_setup( listFile,
                                         'ClusterSeparator', 
-                                        suffix=suffix)
+                                        suffix='clusters')
         if self.output_files_exist(output_file=outputFile):
             return outputFile
+        outputDir = 'Dist_%s' % distance
         separator = ClusterSeparator( listFile,
                                       sequenceFile,
                                       outputFile,
+                                      outputDir,
                                       distance,
                                       min_cluster_size )
         separator()
@@ -400,10 +401,9 @@ class rDnaPipeline( object ):
         return outputFile
 
     def generate_consensus_sequences(self, cluster_list_file, distance):
-        suffix = '%s.consensus' % distance
         output_file = self.process_setup( cluster_list_file,
                                         'ClusterResequencer', 
-                                        suffix=suffix)
+                                        suffix='consensus')
         if self.output_files_exist(output_file=output_file):
             return output_file
         generate_consensus_files( cluster_list_file, self.consensusTool, output_file )
@@ -424,36 +424,33 @@ class rDnaPipeline( object ):
         return outputFile
 
     def cleanup_consensus_folder( self, consensusFile, distance ):
-        suffix = '%s.consensus.cleanup' % distance
         outputFile = self.process_setup( consensusFile, 
                                         'ConsensusCleanup', 
-                                        suffix=suffix )
+                                        suffix='consensus.cleanup' )
         if self.output_files_exist(output_file=outputFile):
             return outputFile
-        reseqPath = os.path.join( os.getcwd(), 'reseq' )
+        reseqPath = os.path.join( os.getcwd(), 'Dist_%s' % distance )
         clean_consensus_outputs( reseqPath, outputFile )
         self.process_cleanup(output_file=outputFile)
         return outputFile
 
-    def select_sequences( self, consensusFile, distance ):
-        suffix = '%s.consensus.selected' % distance
+    def select_sequences( self, consensusFile ):
         outputFile = self.process_setup( consensusFile,
                                         'SequenceSelector', 
-                                        suffix=suffix )
+                                        suffix='consensus.selected' )
         if self.output_files_exist(output_file=outputFile):
             return outputFile
         select_consensus_files( consensusFile, outputFile )
         self.process_cleanup(output_file=outputFile)
         return outputFile
 
-    def output_selected_sequences( self, selectedSequences, distance ):
-        suffix = '%s.fasta' % distance
+    def output_selected_sequences( self, selectedSequences ):
         outputFile = self.process_setup( selectedSequences,
                                         'SequenceWriter',
-                                        suffix=suffix )
+                                        suffix='fasta' )
         if self.output_files_exist(output_file=outputFile):
             return outputFile
-        copy_fasta_list( finalSequenceList, outputFile )
+        copy_fasta_list( selectedSequences, outputFile )
         self.process_cleanup(output_file=outputFile)
         return outputFile
 
@@ -490,12 +487,15 @@ class rDnaPipeline( object ):
         filteredFile = self.filter_sequences( no_chimera_file, trump='.' )
         uniqueFile, nameFile = self.unique_sequences( filteredFile )
         preclusteredFile, nameFile = self.precluster_sequences( uniqueFile, nameFile )
-        fileForClustering = preclusteredFile
+        fileToCluster = preclusteredFile
 
+        clusterFileRoot = '.'.join( fileToCluster.split('.')[:-1] )
         for i, step in enumerate(self.step_list):
             log.info("Beginning iteration #%s - %s" % (i+1, step))
-            distanceMatrix = self.calculate_distance_matrix( fileForClustering, step )
-            listFile = self.cluster_sequences( distanceMatrix, nameFile, step )
+            iterationInput = clusterFileRoot + '.%s.fasta' % step
+            shutil.copyfile( fileToCluster, iterationInput )
+            distanceMatrix = self.calculate_distance_matrix( iterationInput )
+            listFile = self.cluster_sequences( distanceMatrix, nameFile )
 
             # Include all clusters during intermediate stages, others use min_cluster_size
             if step == self.distance:
@@ -508,8 +508,8 @@ class rDnaPipeline( object ):
             # Generate and combine cluster sequences from the cluster-specific files
             consensusFile = self.generate_consensus_sequences( clusterListFile, step )
             self.cleanup_consensus_folder( consensusFile, step )
-            selectedFile = self.select_sequences( consensusFile, step )
-            selectedSequenceFile = self.output_selected_sequences( selectedFile, step )
+            selectedFile = self.select_sequences( consensusFile )
+            selectedSequenceFile = self.output_selected_sequences( selectedFile )
             log.info("Finished iteration #%s - %s" % (i+1, step))
 
             # If this isn't the last iteration, prepare the selected sequences for the next one:

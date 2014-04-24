@@ -52,13 +52,14 @@ class ClusterSeparator(object):
     # Initialization Methods #
     ##########################
 
-    def __init__(self, listFile=None, ccsFile=None, output=None, 
-                                                    distance=None, 
+    def __init__(self, listFile=None, ccsFile=None, outputFile=None,
+                                                    outputDir=None,
+                                                    distance=None,
                                                     min_cluster_size=None):
         if listFile is None or ccsFile is None:
             self.initializeFromArgs()
         else:
-            self.initializeFromCall(listFile, ccsFile, output, distance, min_cluster_size)
+            self.initializeFromCall(listFile, ccsFile, outputFile, outputDir, distance, min_cluster_size)
         self.validate_settings()
 
     def initializeFromArgs(self):
@@ -84,14 +85,15 @@ class ClusterSeparator(object):
         args = parser.parse_args()
         self.__dict__.update( vars(args) )
 
-    def initializeFromCall(self, listFile, ccsFile, output, distance=None, 
-                                                            min_cluster_size=None):
+    def initializeFromCall(self, listFile, ccsFile, outputFile, outputDir,
+                                                                distance=None,
+                                                                min_cluster_size=None):
         self.listFile = listFile
         self.ccsFile = ccsFile
-        self.output = output
+        self.output = outputFile
+        self.outputDir = outputDir
         self.distance = DEFAULT_DIST if distance is None else distance
         self.min_cluster_size = MIN_CLUSTER_SIZE if distance is None else min_cluster_size
-        self.outputDir = 'reseq'
         self.minRefLength = MIN_FULL_LENGTH
 
     def validate_settings( self ):
