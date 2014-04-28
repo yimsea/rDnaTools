@@ -18,6 +18,7 @@ from pbrdna.cluster.ClusterSeparator import ClusterSeparator
 from pbrdna.cluster.generate_consensus import generate_consensus_files
 from pbrdna.cluster.select_consensus import select_consensus_files
 from pbrdna.cluster.clean_consensus import clean_consensus_outputs
+from pbrdna.cluster.names import create_name_file
 from pbrdna.resequence.DagConTools import DagConRunner
 from pbrdna.utils import (validate_executable,
                           create_directory,
@@ -454,7 +455,18 @@ class rDnaPipeline( object ):
         self.process_cleanup(output_file=outputFile)
         return outputFile
 
+    def write_name_file(self, consensusFile, selectedFile ):
+        outputFile = self.process_setup( "Final_Output.fasta",
+                                        'CreateNameFile',
+                                        suffix='names' )
+        if self.output_files_exist(output_file=outputFile):
+            return outputFile
+        create_name_file( consensusFile, selectedFile, outputFile )
+        self.process_cleanup(outputFile=outputFile)
+        return outputFile
+
     def run(self):
+        print self.step_list
         if self.data_type == 'bash5':
             fastqFile = self.extract_raw_ccs( self.sequenceFile )
         elif self.data_type == 'fastq':
@@ -519,6 +531,12 @@ class rDnaPipeline( object ):
                  log.info("Iterative clustering not finished, preparing sequences for next iteration")
                  alignedFile = self.align_sequences( selectedSequenceFile )
                  fileForClustering = self.filter_sequences( alignedFile, trump='.' )
+
+        try:
+            os.symlink( selectedSequenceFile, "Final_Output.fasta")
+        except:
+            pass
+        self.write_name_file( consensusFile, selectedFile )
 
 
 if __name__ == '__main__':

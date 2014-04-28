@@ -37,8 +37,9 @@ def read_sequence_names( data_files ):
     for reference, source in data_files.iteritems():
         ref_names = fasta_names( reference )
         if len( ref_names ) == 1:
-            assert ref_names[0] not in sequence_names
-            sequence_names[ref_names[0]] = fasta_names( source )
+            ref_name = list(ref_names)[0].split()[0]
+            assert ref_name not in sequence_names
+            sequence_names[ref_name] = fasta_names( source )
         elif reference == source:
             for name in ref_names:
                 assert name not in sequence_names
@@ -49,7 +50,9 @@ def read_sequence_names( data_files ):
 
 def output_names( sequence_names, output_file ):
     with open( output_file, 'w') as handle:
-        for reference, names in sequence_names.iteritems():
+        for reference in sorted(sequence_names):
+            print reference
+            names = sequence_names[reference]
             handle.write( "%s\t%s\n" % (reference, ','.join(names)) )
 
 if __name__ == '__main__':
