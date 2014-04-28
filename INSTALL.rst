@@ -109,6 +109,7 @@ Now we can finally install the PacBio python libraries
 and rDnaTools::
 
     $ pip install git+https://github.com/PacificBiosciences/pbcore.git
+    $ pip install git+https://github.com/PacificBiosciences/pbdagcon.git
     $ pip install git+https://github.com/PacificBiosciences/rDnaTools.git
 
 You can do a ``pip freeze`` at this junction to inspect your installed libraries,
