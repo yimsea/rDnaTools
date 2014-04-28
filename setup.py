@@ -19,7 +19,8 @@ setup(
     package_dir = {'':'src'},
     scripts=[
         'src/rDnaPipeline.py',
-        'src/rDnaPipeline2.py'
+        'src/rDnaPipeline2.py',
+        'src/rDnaPipeline3.py'
     ],
     zip_safe = False,
     install_requires=[
