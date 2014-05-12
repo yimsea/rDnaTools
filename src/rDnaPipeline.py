@@ -49,17 +49,10 @@ class rDnaPipeline( object ):
             self.data_type = 'fastq'
         elif ext in ['.fa', '.fsa', '.fasta']:
             self.data_type = 'fasta'
-            self.enable_masking = False
-            self.enable_consensus = False
         else:
             raise TypeError('Sequence file must be a bas.h5 file, a ' + \
                             'fasta file, or a fofn of multiple such files')
-        # If Clustering was disabled, also disable the consensus process
-        if not self.enable_clustering:
-            self.enable_consensus = False
-        # If Consensus is enabled, initialize the appropriate tool
-        if self.enable_consensus:
-            self.consensusTool = DagConRunner('gcon.py', 'r')
+        self.consensusTool = DagConRunner('gcon.py', 'r')
         # Searching for Mothur executable, and set the Mothur Process counter
         self.mothur = validate_executable( self.mothur )
         self.processCount = 0
@@ -475,37 +468,20 @@ class rDnaPipeline( object ):
             no_chimera_file = screenedFile
 
         # Filter out un-used columns to speed up re-alignment and clustering
-        if self.test_mode:
-            filteredFile = self.filter_sequences( no_chimera_file, trump='.' )
-        else:
-            filteredFile = self.filter_sequences( no_chimera_file )
+        filteredFile = self.filter_sequences( no_chimera_file, trump='.' )
 
-        # If masking is enabled, create an aligned FASTQ, mask the 
-        # low-quality bases and remove over-masked reads
-        if self.enable_masking:
-            alignedFastqFile = self.add_quality_to_alignment( fastqFile, filteredFile )
-            maskedFastq = self.mask_fastq_sequences( alignedFastqFile )
-            maskedFasta = self.convert_fastq_to_fasta( maskedFastq )
-            screenedFasta = self.screen_sequences( maskedFasta,
-                                                  min_length=self.min_length)
-            fileForClustering = screenedFasta
-        # Otherwise if masking is disabled, we'll use unique-ify and 
-        #    pre-cluster our sequences
-        else:
-            uniqueFile, nameFile = self.unique_sequences( filteredFile )
-            preclusteredFile, nameFile = self.precluster_sequences( uniqueFile, nameFile )
-            fileForClustering = preclusteredFile
-        # If enabled, calculate sequence distances and cluster
-        if self.enable_clustering:
-            distanceMatrix = self.calculate_distance_matrix( fileForClustering )
-            listFile = self.cluster_sequences( distanceMatrix, nameFile )
-        # If enabled, generate a consensus for each cluster from above
-        if self.enable_consensus:
-            clusterListFile = self.separate_cluster_sequences( listFile, fastqFile )
-            consensusFile = self.generate_consensus_sequences( clusterListFile )
-            self.cleanup_consensus_folder( consensusFile )
-            selectedFile = self.select_final_sequences( consensusFile )
-            finalFile = self.output_final_sequences( selectedFile )
+        uniqueFile, nameFile = self.unique_sequences( filteredFile )
+        preclusteredFile, nameFile = self.precluster_sequences( uniqueFile, nameFile )
+        fileForClustering = preclusteredFile
+
+        distanceMatrix = self.calculate_distance_matrix( fileForClustering )
+        listFile = self.cluster_sequences( distanceMatrix, nameFile )
+
+        clusterListFile = self.separate_cluster_sequences( listFile, fastqFile )
+        consensusFile = self.generate_consensus_sequences( clusterListFile )
+        self.cleanup_consensus_folder( consensusFile )
+        selectedFile = self.select_final_sequences( consensusFile )
+        finalFile = self.output_final_sequences( selectedFile )
 
 if __name__ == '__main__':
     rDnaPipeline().run()

@@ -15,8 +15,8 @@ from pbrdna.fastq.QualityAligner import QualityAligner
 from pbrdna.fastq.QualityMasker import QualityMasker
 from pbrdna.mothur.MothurTools import MothurRunner
 from pbrdna.cluster.ClusterSeparator import ClusterSeparator
-from pbrdna.cluster.generate_consensus import generate_consensus_files
-from pbrdna.cluster.select_consensus import select_consensus_files
+from pbrdna.cluster.generate import generate_consensus_files, generate_reference_files
+from pbrdna.cluster.select import select_consensus_files, select_reference_files
 from pbrdna.cluster.clean_consensus import clean_consensus_outputs
 from pbrdna.cluster.names import create_name_file
 from pbrdna.resequence.DagConTools import DagConRunner
@@ -411,6 +411,16 @@ class rDnaPipeline( object ):
         self.process_cleanup(output_file=output_file)
         return output_file
 
+    def generate_ref_sequences(self, cluster_list_file, distance):
+        output_file = self.process_setup( cluster_list_file,
+                                        'ClusterResequencer',
+                                        suffix='consensus')
+        if self.output_files_exist(output_file=output_file):
+            return output_file
+        generate_reference_files( cluster_list_file, output_file )
+        self.process_cleanup(output_file=output_file)
+        return output_file
+
     def cleanup_uchime_output( self, screenedFile ):
         outputFile = self.process_setup( screenedFile,
                                          'UchimeCleanup',
@@ -442,6 +452,16 @@ class rDnaPipeline( object ):
         if self.output_files_exist(output_file=outputFile):
             return outputFile
         select_consensus_files( consensusFile, outputFile )
+        self.process_cleanup(output_file=outputFile)
+        return outputFile
+
+    def select_ref_sequences( self, consensusFile ):
+        outputFile = self.process_setup( consensusFile,
+                                        'SequenceSelector',
+                                        suffix='consensus.selected' )
+        if self.output_files_exist(output_file=outputFile):
+            return outputFile
+        select_reference_files( consensusFile, outputFile )
         self.process_cleanup(output_file=outputFile)
         return outputFile
 
@@ -520,9 +540,8 @@ class rDnaPipeline( object ):
                                                                    step, 1 )
 
             # Generate and combine cluster sequences from the cluster-specific files
-            consensusFile = self.generate_consensus_sequences( clusterListFile, step )
-            self.cleanup_consensus_folder( consensusFile, step )
-            selectedFile = self.select_sequences( consensusFile )
+            consensusFile = self.generate_ref_sequences( clusterListFile, step )
+            selectedFile = self.select_ref_sequences( consensusFile )
             selectedSequenceFile = self.output_selected_sequences( selectedFile )
             log.info("Finished iteration #%s - %s" % (i+1, step))
 

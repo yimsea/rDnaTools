@@ -21,6 +21,18 @@ def generate_consensus_files( cluster_list, consensus_tool, output_file ):
                 consensus_files.append( (sequence_file, reference_file, consensus) )
     write_consensus_files( consensus_files, output_file )
 
+def generate_reference_files( cluster_list, output_file ):
+    consensus_files = []
+    with open( cluster_list ) as handle:
+        for line in handle:
+            sequence_file, reference_file, count = line.strip().split()
+            print sequence_file, reference_file
+            if reference_file.endswith('None'):
+                consensus_files.append( (sequence_file, 'None', 'None') )
+            else:
+                consensus_files.append( (sequence_file, reference_file, 'None') )
+    write_consensus_files( consensus_files, output_file )
+
 def write_consensus_files( consensus_files, output_file ):
     with open( output_file, 'w' ) as handle:
         for filename_set in consensus_files:

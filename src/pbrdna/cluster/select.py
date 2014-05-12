@@ -31,6 +31,15 @@ def select_combined_sequences( consensus_file, output_file ):
                 selected_files.append( sequence_file )
     output_selected_consensus( output_file, selected_files )
 
+def select_reference_files( consensus_file, output_file ):
+    selected_files = []
+    with open( consensus_file ) as handle:
+        for line in handle:
+            sequence_file, reference_file, consensus_file = line.strip().split()
+            if not reference_file.endswith('None'):
+                selected_files.append( reference_file )
+    output_selected_consensus( output_file, selected_files )
+
 def output_selected_consensus( output_file, selected_files ):
     with open( output_file, 'w' ) as handle:
         for filename in selected_files:
