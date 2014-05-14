@@ -32,10 +32,6 @@ def initialize_logger( logger, stream=None, log_file=None, debug=False):
 
     if stream:
         add_stream_handler( logger, stream=stream, log_level=log_level )
-    else:
-        add_stream_handler( logger, log_level=log_level )
 
     if log_file:
         add_file_handler( logger, log_file=log_file, log_level=log_level )
-    else:
-        add_file_handler( logger, log_level=log_level )

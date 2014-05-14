@@ -17,16 +17,20 @@ setup(
     license=open('LICENSES.txt').read(),
     packages = find_packages('src'),
     package_dir = {'':'src'},
-    scripts=[
-        'src/rDnaPipeline_Old.py',
-        'src/rDnaPipeline_Redorder.py',
-        'src/rDnaPipeline3.py'
-    ],
     zip_safe = False,
+    scripts=[
+        'src/rDnaPipeline.py',
+        'src/rDnaPipeline_Old.py',
+        'src/rDnaPipeline_Redorder.py'
+    ],
     install_requires=[
         'h5py >= 2.0.1',
         'numpy >= 1.6.0',
-        'pbcore >= 0.8.0',
-        'pbtools.pbdagcon >= 0.2.1'
+        'pbcore >= 0.8.0'
+    ],
+    extras_require={
+        "Consensus": [
+            'pbtools.pbdagcon >= 0.2.1'
         ]
-    )
+    }
+)

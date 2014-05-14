@@ -51,15 +51,14 @@ class rDnaPipeline( object ):
             self.data_type = 'fastq'
         elif ext in ['.fa', '.fsa', '.fasta']:
             self.data_type = 'fasta'
-            self.enable_masking = False
-            self.enable_consensus = False
         else:
             raise TypeError('Sequence file must be a bas.h5 file, a ' + \
                             'fasta file, or a fofn of multiple such files')
 
-        # Set the
         self.step_list = self.calculate_steps()
-        self.consensusTool = DagConRunner('gcon.py', 'r')
+
+        if self.enable_consensus:
+            self.consensusTool = DagConRunner('gcon.py', 'r')
 
         # Searching for Mothur executable, and set the Mothur Process counter
         self.mothur = validate_executable( self.mothur )

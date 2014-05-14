@@ -1,7 +1,8 @@
-import argparse, logging
+import argparse, logging, sys
 
 from . import __VERSION__
-from utils import validate_int, validate_float, validate_file
+from pbrdna.utils import validate_int, validate_float, validate_file, which
+from pbrdna.log import initialize_logger
 
 NPROC = 1
 MIN_DIST = 0.001
@@ -142,6 +143,7 @@ def parse_args():
         action=PrintVersionAction)
 
     parser.parse_args( namespace=args )
+    initialize_logger( log, stream=sys.stdout, debug=args.debug )
 
     # Validate any input files
     if validate_file( args.alignment_reference ) is None:
@@ -153,6 +155,11 @@ def parse_args():
         msg = 'Default Chimera Reference not detected in PATH, falling back to Alignment Reference'
         log.warn( msg )
         args.chimera_reference = args.alignment_reference
+
+    if args.enable_consensus and which( 'gcon.py' ) is None:
+        msg = 'No copies of pbdagcon/gcon.py detected in PATH, disabling consensus'
+        log.warn( msg )
+        args.enable_consensus = False
 
     # Validate numerical parameters
     validate_int( 'NumProc', args.nproc, minimum=0 )
