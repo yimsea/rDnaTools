@@ -18,8 +18,8 @@ setup(
     packages = find_packages('src'),
     package_dir = {'':'src'},
     scripts=[
-        'src/rDnaPipeline.py',
-        'src/rDnaPipeline2.py',
+        'src/rDnaPipeline_Old.py',
+        'src/rDnaPipeline_Redorder.py',
         'src/rDnaPipeline3.py'
     ],
     zip_safe = False,

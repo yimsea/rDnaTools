@@ -6,7 +6,7 @@ from utils import validate_int, validate_float, validate_file
 NPROC = 1
 MIN_DIST = 0.001
 DIST = 0.03
-STEP = 0.01
+STEP = 0.015
 MAX_DIST = 0.5
 MIN_ACCURACY = 0.99
 MIN_QV = 15
@@ -113,6 +113,10 @@ def parse_args():
     add('--disable_iteration',
         action='store_false',
         dest='enable_iteration',
+        help="Turn off the iterative Clustering and Resequencing steps")
+    add('--disable_consensus',
+        action='store_false',
+        dest='enable_consensus',
         help="Turn off the iterative Clustering and Resequencing steps")
     add('--blasr',
         metavar='BLASR_PATH', 
